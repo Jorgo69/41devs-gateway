@@ -1,0 +1,13 @@
+{
+  "name": "41devs-gateway",
+  "version": "1.0.0",
+  "description": "Module gateway du projet 41devs.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,32 @@
+# Dépendances
+node_modules/
+
+# Projet de test local (ne pas pousser sur le repo du package)
+test-vue-gateway/
+
+# Variables d'environnement (clés, secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / éditeur
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build / cache
+dist/
+coverage/
+.cache/
+
+# Optionnel : décommenter si tu ne veux pas versionner le lock
+# package-lock.json
