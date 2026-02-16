@@ -49,6 +49,8 @@ npm install 41devs-gateway
 | **main** | Version stable. |
 | **beta** | Version pour les testeurs. Tu merges dedans quand c’est prêt à être testé ; quand c’est validé, tu merges beta → main. |
 
+**Après un merge main → beta** : sur la branche beta, exécuter `npm run beta-readme` (remet le ReadMe court pour les testeurs), puis `git add ReadMe.md && git commit -m "docs(beta): restaurer ReadMe allégé" && git push origin beta`.
+
 ---
 
 ## Prérequis
