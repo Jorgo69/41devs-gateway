@@ -21,8 +21,6 @@ Les noms `createGateway` et `openPayment` sont volontairement courts. Si ton pro
   import { createGateway as create41DevsGateway } from '41devs-gateway'
   ```
 
-Partout dans la doc on utilise **41devs-gateway** (avec un **s**) pour rester aligné avec le nom de la boîte **41 Devs**.
-
 ---
 
 ## Installation
@@ -32,18 +30,6 @@ Partout dans la doc on utilise **41devs-gateway** (avec un **s**) pour rester al
 ```bash
 npm install 41devs-gateway
 ```
-
-### Via GitHub (version en cours de développement)
-
-Tu peux tester la version en mettant le dépôt sur GitHub, puis :
-
-```bash
-npm install github:41devs/41devs-gateway
-# ou en local
-npm install /chemin/vers/41devs-gateway
-```
-
-**Conseil** : mettre d’abord le package sur GitHub, valider les modifs éventuelles, puis informer la boîte une fois stable.
 
 ---
 
