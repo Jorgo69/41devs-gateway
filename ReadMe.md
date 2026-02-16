@@ -25,11 +25,29 @@ Les noms `createGateway` et `openPayment` sont volontairement courts. Si ton pro
 
 ## Installation
 
+### Via GitHub (pour tester avant publication npm)
+
+- **Version stable (main)** :
+  ```bash
+  npm install github:Jorgo69/41devs-gateway#main
+  ```
+- **Version en test (beta)** — pour les testeurs, évolue avec les mises à jour :
+  ```bash
+  npm install github:Jorgo69/41devs-gateway#beta
+  ```
+
 ### Via npm (quand le package sera publié)
 
 ```bash
 npm install 41devs-gateway
 ```
+
+### Branches
+
+| Branche | Usage |
+|---------|--------|
+| **main** | Version stable. |
+| **beta** | Version pour les testeurs. Tu merges dedans quand c’est prêt à être testé ; quand c’est validé, tu merges beta → main. |
 
 ---
 
