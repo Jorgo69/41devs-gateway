@@ -1,7 +1,7 @@
 {
   "name": "41devs-gateway",
   "version": "1.0.0",
-  "description": "Module gateway du projet 41devs.",
+  "description": "Module gateway passerelle de paiement de 41devs.",
   "main": "index.js",
   "type": "module",
   "scripts": {
