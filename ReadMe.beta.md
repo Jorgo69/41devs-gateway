@@ -221,7 +221,7 @@ En production, **amount** et **currency** doivent venir du backend (session de p
 
 Documentation complète (API détaillée, workflow branches) : branche **main** du dépôt.
 
----
+--- ---
 
 ## Développement
 
