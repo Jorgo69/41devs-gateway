@@ -4,11 +4,38 @@
   "description": "Module gateway passerelle de paiement de 41devs.",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "src"
+  ],
+  "keywords": [
+    "payment",
+    "gateway",
+    "mobile-money",
+    "mtn",
+    "moov",
+    "celtis",
+    "xof",
+    "41devs",
+    "paiement",
+    "passerelle"
+  ],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jorgo69/41devs-gateway"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "beta-readme": "node -e \"require('fs').copyFileSync('ReadMe.beta.md','ReadMe.md')\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "vitest": "^3.0.0"
+  }
 }

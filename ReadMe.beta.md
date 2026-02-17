@@ -4,6 +4,14 @@ Version **beta** pour les testeurs. SDK de paiement 41 Devs : popup MTN, Moov, C
 
 ---
 
+## En bref : pour voir que ça marche
+
+- Le SDK **n’affiche rien** dans la console tout seul.
+- **C’est à vous** d’ajouter `console.log` dans un `.then(...)` (succès) et un `.catch(...)` (annulation ou erreur) après chaque `gateway.openPayment(...)`.
+- Si vous ne mettez pas de `.then` / `.catch` avec un log, vous ne verrez aucun message après avoir validé ou annulé le paiement — **copiez-collez les exemples ci-dessous** pour avoir le bon code du premier coup.
+
+---
+
 ## Installation
 
 ```bash
@@ -29,11 +37,32 @@ Vous choisissez quand déclencher : clic, double-clic, hover, soumission de form
 
 ---
 
-## Exemples prêts à copier-coller
+## Retour de `openPayment` (Promise)
+
+`gateway.openPayment(options)` retourne une **Promise** :
+
+- **Résolue** quand l'utilisateur valide le formulaire (paiement simulé en beta).  
+  Payload typique :  
+  `{ success: true, method, amount, currency, paymentReference?, ...customerData }`  
+  (Mobile : `countryCode`, `fullPhone`, `prenom`, `nom`, `email`, `telephone` ; Carte : `email` uniquement, pas de données sensibles.)
+
+- **Rejetée** si l'utilisateur annule (bouton Annuler ou fermeture par la croix).  
+  Erreur : `{ code: 'CANCELLED', message: '...' }`.  
+  Pour distinguer l'annulation d'une autre erreur, comparez `err.code` à la constante exportée :
+
+**Le SDK ne fait aucun log.** Pour voir le résultat en console, vous **devez** appeler `.then()` et `.catch()` et y mettre vos propres `console.log` (voir exemples ci-dessous).
+
+---
+
+## Exemples à copier-coller (avec logs en console)
+
+Chaque exemple est complet : après un clic sur le bouton, si vous **validez** le formulaire → vous verrez `Paiement réussi` + l’objet en console ; si vous **annulez** (bouton Annuler ou croix) → vous verrez `Annulé par l'utilisateur`. Sans le `.then()` et `.catch()` ci-dessous, vous ne verriez rien.
+
+---
 
 ### Vanilla JS + HTML
 
-Fichier unique (avec un bundler type Vite qui résout `41devs-gateway`) ou script module pointant vers votre build.
+Un seul fichier HTML. Avec un projet Vite (ou autre bundler), placez ce code dans votre point d’entrée ; le script doit être en `type="module"` et le projet doit résoudre le module `41devs-gateway`.
 
 ```html
 <!DOCTYPE html>
@@ -46,7 +75,7 @@ Fichier unique (avec un bundler type Vite qui résout `41devs-gateway`) ou scrip
   <button type="button" id="pay-btn">Payer maintenant</button>
 
   <script type="module">
-    import { createGateway } from '41devs-gateway'
+    import { createGateway, PAYMENT_CANCELLED_CODE } from '41devs-gateway'
 
     const gateway = createGateway({
       publicKey: 'pk_xxx',
@@ -54,11 +83,22 @@ Fichier unique (avec un bundler type Vite qui résout `41devs-gateway`) ou scrip
     })
 
     document.getElementById('pay-btn').addEventListener('click', () => {
-      gateway.openPayment({
-        amount: 1000,
-        currency: 'XOF',
-        customerName: 'Client',
-      })
+      gateway
+        .openPayment({
+          amount: 1000,
+          currency: 'XOF',
+          customerName: 'Client',
+        })
+        .then((result) => {
+          console.log('Paiement réussi', result)
+        })
+        .catch((err) => {
+          if (err?.code === PAYMENT_CANCELLED_CODE) {
+            console.log('Annulé par l\'utilisateur')
+          } else {
+            console.error('Erreur', err)
+          }
+        })
     })
   </script>
 </body>
@@ -69,7 +109,7 @@ Fichier unique (avec un bundler type Vite qui résout `41devs-gateway`) ou scrip
 
 ### Vue 3 (Composition API)
 
-Créer la gateway une fois (ex. `onMounted`), puis appeler `openPayment` au clic.
+Copiez-collez ce composant. Au clic : si vous validez le formulaire → `Paiement réussi` en console ; si vous annulez → `Annulé par l'utilisateur`.
 
 ```vue
 <template>
@@ -78,7 +118,7 @@ Créer la gateway une fois (ex. `onMounted`), puis appeler `openPayment` au clic
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { createGateway } from '41devs-gateway'
+import { createGateway, PAYMENT_CANCELLED_CODE } from '41devs-gateway'
 
 const gateway = ref(null)
 
@@ -90,11 +130,22 @@ onMounted(() => {
 })
 
 function openPaymentModal() {
-  gateway.value?.openPayment({
-    amount: 1000,
-    currency: 'XOF',
-    customerName: 'Client',
-  })
+  gateway.value
+    ?.openPayment({
+      amount: 1000,
+      currency: 'XOF',
+      customerName: 'Client',
+    })
+    ?.then((result) => {
+      console.log('Paiement réussi', result)
+    })
+    ?.catch((err) => {
+      if (err?.code === PAYMENT_CANCELLED_CODE) {
+        console.log('Annulé par l\'utilisateur')
+      } else {
+        console.error('Erreur', err)
+      }
+    })
 }
 </script>
 ```
@@ -103,11 +154,11 @@ function openPaymentModal() {
 
 ### React
 
-Créer la gateway une fois (ex. `useRef` + `useEffect`), puis appeler `openPayment` au clic.
+Copiez-collez ce composant. Au clic : si vous validez le formulaire → `Paiement réussi` en console ; si vous annulez → `Annulé par l'utilisateur`.
 
 ```jsx
 import { useRef, useEffect } from 'react'
-import { createGateway } from '41devs-gateway'
+import { createGateway, PAYMENT_CANCELLED_CODE } from '41devs-gateway'
 
 export default function PayButton() {
   const gatewayRef = useRef(null)
@@ -120,11 +171,24 @@ export default function PayButton() {
   }, [])
 
   const handleClick = () => {
-    gatewayRef.current?.openPayment({
+    const promise = gatewayRef.current?.openPayment({
       amount: 1000,
       currency: 'XOF',
       customerName: 'Client',
     })
+    if (promise) {
+      promise
+        .then((result) => {
+          console.log('Paiement réussi', result)
+        })
+        .catch((err) => {
+          if (err?.code === PAYMENT_CANCELLED_CODE) {
+            console.log('Annulé par l\'utilisateur')
+          } else {
+            console.error('Erreur', err)
+          }
+        })
+    }
   }
 
   return <button type="button" onClick={handleClick}>Payer maintenant</button>
@@ -133,13 +197,32 @@ export default function PayButton() {
 
 ---
 
+## Vérifier que ça marche (checklist)
+
+1. Copiez un des exemples ci-dessus (Vanilla, Vue ou React) dans votre projet.
+2. Lancez l’app et ouvrez la **console** du navigateur (F12 → onglet Console).
+3. Cliquez sur le bouton **Payer maintenant** → la fenêtre de paiement s’ouvre.
+4. **Si vous validez** le formulaire (choisir un moyen, remplir, cliquer « Confirmer le paiement ») → en console vous devez voir : `Paiement réussi` puis l’objet avec `success`, `method`, `amount`, etc.
+5. **Si vous annulez** (bouton Annuler ou croix ×) → en console vous devez voir : `Annulé par l'utilisateur`.
+
+Si vous ne voyez rien en console, vérifiez que vous avez bien le `.then(...)` et le `.catch(...)` avec les `console.log` comme dans les exemples.
+
+---
+
 ## Options utiles
 
 - **createGateway** : `{ publicKey, environment, theme, logoUrl, merchantLogoUrl, colors: { light: { primary }, dark: { primary } } }`
-- **openPayment** : `{ amount, currency, customerName, paymentReference }`
+- **openPayment** : `{ amount, currency, customerName, paymentReference }` — retourne une **Promise** (voir ci-dessus).
+- **Export** : `createGateway`, `create41DevsGateway`, `PAYMENT_CANCELLED_CODE` (pour détecter l'annulation dans le `.catch()`).
 
 En production, **amount** et **currency** doivent venir du backend (session de paiement). **secretKey** reste uniquement côté serveur.
 
 ---
 
 Documentation complète (API détaillée, workflow branches) : branche **main** du dépôt.
+
+---
+
+## Développement
+
+Pour contribuer ou vérifier le SDK en local : `npm test` (Vitest + jsdom). Voir `tests/README.md` pour la couverture.
