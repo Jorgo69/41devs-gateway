@@ -10,7 +10,7 @@ import * as ui from '../components/Helpers.js'
  * @param {Object} options - Options de la session (optionnel)
  */
 export function openPayment(baseConfig, options) {
-  const finalConfig = { ...baseConfig, ...options }
+  const finalConfig = { ...baseConfig, ...(options ?? {}) }
 
   const requestedTheme = finalConfig.theme ?? baseConfig.theme ?? 'auto'
   const effectiveTheme = getEffectiveTheme(requestedTheme)

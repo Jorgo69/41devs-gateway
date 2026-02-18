@@ -17,13 +17,13 @@ Ou après publication npm : `npm install 41devs-gateway`
 ## Utilisation
 
 1. Crée la gateway une fois.
-2. Au clic (bouton ou autre), appelle `gateway.openPayment({ amount, currency })`.
-3. La fenêtre s’ouvre ; l’utilisateur peut fermer avec Annuler ou X.
+2. Au clic (bouton ou autre), appelle `gateway.openPayment()` — rien à préciser, la fenêtre s’ouvre.
+3. L’utilisateur ferme avec Annuler ou X.
 
 **Exemple à copier-coller (HTML + JS) :**
 
 ```html
-<button type="button" id="pay-btn">Payer</button>
+<button type="button" id="pay-btn">Ouvrir</button>
 <script type="module">
   import { createGateway } from '41devs-gateway'
 
@@ -33,12 +33,34 @@ Ou après publication npm : `npm install 41devs-gateway`
   })
 
   document.getElementById('pay-btn').addEventListener('click', () => {
-    gateway.openPayment({
-      amount: 1000,
-      currency: 'XOF',
-    })
+    gateway.openPayment()
   })
 </script>
+```
+
+**Exemple à copier-coller (VueJs 3) :**
+
+```vue
+<script setup>
+import { createGateway } from '41devs-gateway'
+
+// Configuration globale de la gateway (clé publique, environnement, etc.)
+const gateway = createGateway({
+  publicKey: 'PUBLIC_KEY_DE_TEST',
+  environment: 'sandbox',
+})
+
+const payer = () => {
+  gateway.openPayment()
+}
+</script>
+
+<template>
+  <main>
+    <h1>Test de 41devs-gateway</h1>
+    <button @click="payer">Payer 1000 XOF</button>
+  </main>
+</template>
 ```
 
 Projet en ES modules (Vite, Webpack, ou `"type": "module"` dans `package.json`).
