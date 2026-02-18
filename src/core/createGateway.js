@@ -1,11 +1,11 @@
 import { openPayment as openPaymentImpl } from './openPayment.js'
 
 /**
- * Initialise la gateway avec une configuration globale.
- * publicKey / secretKey : secretKey uniquement côté backend.
+ * Initialise la gateway. Retourne un objet avec openPayment(options).
+ * Au clic, openPayment ouvre la fenêtre (logo, Propulsé par 41 Devs, Annuler, X).
  *
  * @param {Object} globalConfig - publicKey, environment, theme, logoUrl, etc.
- * @returns {{ openPayment: (options: Object) => Promise<Object> }}
+ * @returns {{ openPayment: (options: Object) => void }}
  */
 export function createGateway(globalConfig = {}) {
   const baseConfig = {
@@ -15,7 +15,7 @@ export function createGateway(globalConfig = {}) {
 
   return {
     openPayment(options) {
-      return openPaymentImpl(baseConfig, options ?? {})
+      openPaymentImpl(baseConfig, options ?? {})
     },
   }
 }
