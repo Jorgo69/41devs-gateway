@@ -1,9 +1,15 @@
+/**
+ * Calcul du theme effectif (clair ou sombre) et construction de la palette de couleurs.
+ * En mode "auto", utilise la preference systeme (prefers-color-scheme).
+ */
+
 import { DEFAULT_PALETTE_DARK, DEFAULT_PALETTE_LIGHT } from '../constants/index.js'
 
 /**
- * Détermine le thème effectif à partir de la config (auto = préférence système).
- * @param {string} requestedTheme - 'light' | 'dark' | 'auto'
- * @returns {string} 'light' | 'dark'
+ * Retourne le theme effectif a utiliser pour l'affichage.
+ * Si requestedTheme vaut "auto", on lit la preference systeme du navigateur.
+ * @param {string} requestedTheme - "light", "dark" ou "auto".
+ * @returns {string} "light" ou "dark".
  */
 export function getEffectiveTheme(requestedTheme) {
   if (requestedTheme !== 'auto') return requestedTheme
@@ -14,10 +20,11 @@ export function getEffectiveTheme(requestedTheme) {
 }
 
 /**
- * Construit la palette de couleurs (thème + couleur primaire personnalisée).
- * @param {string} effectiveTheme - 'light' | 'dark'
- * @param {Object} customColors - { light?: { primary }, dark?: { primary } }
- * @returns {Object} palette d'applications des couleurs
+ * Construit l'objet palette utilise pour styliser le modal (couleurs de fond, texte, boutons).
+ * Si customColors contient une couleur primaire pour le theme actuel, elle remplace primaryButtonBg.
+ * @param {string} effectiveTheme - "light" ou "dark".
+ * @param {Object} customColors - Objet optionnel avec light.primary et/ou dark.primary.
+ * @returns {Object} Objet palette avec toutes les cles (modalBg, textPrimary, cancelBorder, etc.).
  */
 export function buildPalette(effectiveTheme, customColors = {}) {
   const basePalette = effectiveTheme === 'dark' ? DEFAULT_PALETTE_DARK : DEFAULT_PALETTE_LIGHT

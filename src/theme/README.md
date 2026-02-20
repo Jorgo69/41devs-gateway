@@ -1,15 +1,10 @@
 # theme
 
-Calcul du thème effectif et de la palette de couleurs (sans DOM, sauf `getEffectiveTheme` qui lit `prefers-color-scheme`).
+Calcul du theme effectif (clair ou sombre) et construction de la palette de couleurs.
 
 ## index.js
 
-- **Rôle** : à partir de la config (theme demandé + couleurs custom), fournir la palette utilisée par tout le modal.
-- **Exporte** :
-  - `getEffectiveTheme(requestedTheme)`  
-    - **Reçoit** : `'light' | 'dark' | 'auto'`.  
-    - **Retourne** : `'light' | 'dark'`. En `'auto'`, utilise `window.matchMedia('(prefers-color-scheme: dark)')`.
-  - `buildPalette(effectiveTheme, customColors)`  
-    - **Reçoit** : thème effectif + optionnel `{ light?: { primary }, dark?: { primary } }`.  
-    - **Retourne** : objet palette (overlayBg, modalBg, textPrimary, etc.) avec éventuelle couleur primaire personnalisée.
-- **Utilisé par** : core (openPayment).
+- **getEffectiveTheme(requestedTheme)** : retourne "light" ou "dark". Si requestedTheme vaut "auto", utilise la preference systeme (prefers-color-scheme). Parametre : chaine "light", "dark" ou "auto".
+- **buildPalette(effectiveTheme, customColors)** : retourne un objet palette (toutes les cles de couleur pour le modal). Si customColors contient une couleur primaire pour le theme actuel, elle remplace primaryButtonBg. Parametres : "light" ou "dark", et optionnellement un objet avec light.primary et/ou dark.primary.
+
+Utilise par core (openPayment).

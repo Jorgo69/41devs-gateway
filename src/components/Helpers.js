@@ -1,9 +1,15 @@
+/**
+ * Briques d'interface reutilisables : bouton fermer (X), signature, ligne de logos, champs formulaire, select pays.
+ * Chaque fonction cree des elements DOM et les attache au conteneur fourni.
+ */
+
 import { DEFAULT_41DEV_LOGO_SVG } from '../constants/index.js'
 
 /**
- * @param {HTMLElement} container
- * @param {Object} palette
- * @param {() => void} onClose
+ * Ajoute un bouton croix en haut a droite du conteneur. Au clic, appelle onClose.
+ * @param {HTMLElement} container - Element qui recevra le bouton (ex. le modal).
+ * @param {Object} palette - Objet couleurs (textSecondary, buttonBg, textPrimary).
+ * @param {() => void} onClose - Fonction appelee au clic (ex. closeOverlay).
  */
 export function addCloseX(container, palette, onClose) {
   const closeBtn = document.createElement('button')
@@ -24,12 +30,13 @@ export function addCloseX(container, palette, onClose) {
 }
 
 /**
- * @param {HTMLElement} container
- * @param {Object} palette
+ * Ajoute le texte "Propulse par 41 Devs" en bas du conteneur, style signature.
+ * @param {HTMLElement} container - Element parent.
+ * @param {Object} palette - Objet couleurs (textMuted).
  */
 export function addSignature(container, palette) {
   const sig = document.createElement('p')
-  sig.textContent = 'Propulsé par 41 Devs'
+  sig.textContent = 'Propulse par 41 Devs'
   sig.style.marginTop = '10px'
   sig.style.marginBottom = '0'
   sig.style.fontSize = '11px'
@@ -39,9 +46,11 @@ export function addSignature(container, palette) {
 }
 
 /**
- * @param {HTMLElement} container
- * @param {Object} config - { logoUrl?, merchantLogoUrl?, useDefault41DevLogo? }
- * @param {Object} palette
+ * Ajoute une ligne avec un ou deux logos (logo 41 Devs par defaut, ou URL custom, ou logo marchand).
+ * Ne fait rien si config n'a ni logoUrl ni merchantLogoUrl ni useDefault41DevLogo a true.
+ * @param {HTMLElement} container - Element parent.
+ * @param {Object} config - logoUrl (optionnel), merchantLogoUrl (optionnel), useDefault41DevLogo (defaut true).
+ * @param {Object} palette - Couleurs (primaryButtonBg, textPrimary).
  */
 export function addLogoRow(container, config, palette) {
   const { logoUrl, merchantLogoUrl, useDefault41DevLogo = true } = config
@@ -98,9 +107,10 @@ export function addLogoRow(container, config, palette) {
 }
 
 /**
- * @param {Object} palette
- * @param {string} labelText
- * @param {{ type?: string, placeholder?: string, autocomplete?: string }} options
+ * Cree un champ formulaire avec label et input. Retourne le wrapper et l'input pour y attacher des ecouteurs.
+ * @param {Object} palette - Couleurs (textSecondary, inputBorder, inputBg, inputText).
+ * @param {string} labelText - Texte du label.
+ * @param {{ type?: string, placeholder?: string, autocomplete?: string }} options - type input, placeholder, autocomplete.
  * @returns {{ wrapper: HTMLElement, input: HTMLInputElement }}
  */
 export function createInput(palette, labelText, options = {}) {
@@ -123,9 +133,10 @@ export function createInput(palette, labelText, options = {}) {
 }
 
 /**
- * @param {Object} palette
- * @param {Array<{ code: string, name: string, flag: string, dial: string }>} countries
- * @returns {{ wrapper: HTMLElement, select: HTMLSelectElement, getSelectedCountry: () => Object }}
+ * Cree un select pour choisir un pays. Chaque option affiche drapeau, nom et indicatif.
+ * @param {Object} palette - Couleurs des champs.
+ * @param {Array<{ code: string, name: string, flag: string, dial: string }>} countries - Liste des pays.
+ * @returns {{ wrapper: HTMLElement, select: HTMLSelectElement, getSelectedCountry: () => Object }} getSelectedCountry retourne l'objet pays selectionne.
  */
 export function createCountrySelect(palette, countries) {
   const wrapper = document.createElement('div')

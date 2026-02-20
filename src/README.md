@@ -1,15 +1,12 @@
-# Structure du code source
+# Structure du code source (src)
 
-Organisation du SDK par dossiers. Chaque dossier contient un README qui décrit le rôle des fichiers, ce qu’ils reçoivent et ce qu’ils renvoient.
+Chaque dossier contient un README qui decrit le role des fichiers, ce qu'ils recoivent et ce qu'ils renvoient.
 
-| Dossier | Rôle |
-|--------|------|
-| **constants/** | Codes, logo, pays par défaut, palettes, `isMobileMoney` |
-| **theme/** | Thème effectif (light/dark/auto), construction de la palette |
-| **overlay/** | Création / suppression du conteneur plein écran |
-| **validation/** | Validation email, téléphone, carte (numéro, expiration, CVV) |
-| **components/** | Briques UI : fermer, signature, logos, champs, sélecteur pays (Helpers.js) |
-| **steps/** | step1 = choix du moyen ; step2 = formulaire Mobile Money ou Carte |
-| **core/** | openPayment (orchestration + Promise), createGateway (API publique) |
+- **constants** : codes, logo, pays par defaut, palettes clair/sombre, isMobileMoney.
+- **theme** : getEffectiveTheme, buildPalette (theme auto/light/dark et couleurs).
+- **overlay** : getOrCreateOverlay, closeOverlay (conteneur plein ecran).
+- **validation** : validateEmail, validatePhoneForCountry, validateCardNumber, validateExpiry, validateCvv (version beta).
+- **components** : addCloseX, addSignature, addLogoRow, createInput, createCountrySelect (Helpers.js).
+- **core** : openPayment (affichage du modal), createGateway (API publique).
 
-Point d’entrée du package : **racine `index.js`** (ré-exporte `src/index.js`).
+Le point d'entree du package est le fichier index.js a la racine du projet, qui re-exporte src/index.js.

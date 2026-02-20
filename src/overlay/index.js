@@ -1,8 +1,15 @@
+/**
+ * Gestion du conteneur overlay plein ecran qui contient le modal.
+ * Creation et suppression du DOM (document, body).
+ */
+
+/** Identifiant de l'element overlay dans le DOM. */
 const OVERLAY_ID = 'fdg-overlay'
 
 /**
- * Crée (si besoin) ou récupère le conteneur d'overlay plein écran.
- * @returns {HTMLElement}
+ * Retourne l'element overlay s'il existe deja, sinon le cree, l'ajoute au body et le retourne.
+ * L'overlay est en position fixed, plein ecran, centré, avec un z-index eleve.
+ * @returns {HTMLElement} L'element div overlay.
  */
 export function getOrCreateOverlay() {
   let overlay = document.getElementById(OVERLAY_ID)
@@ -23,7 +30,8 @@ export function getOrCreateOverlay() {
 }
 
 /**
- * Ferme et nettoie l'overlay.
+ * Supprime l'overlay du DOM s'il existe.
+ * Appelee quand l'utilisateur ferme la fenetre (Annuler ou croix).
  */
 export function closeOverlay() {
   const overlay = document.getElementById(OVERLAY_ID)

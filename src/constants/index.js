@@ -1,31 +1,39 @@
 /**
- * Code d'erreur retourné quand l'utilisateur annule le paiement (bouton Annuler ou fermeture par la croix).
- * Permet de distinguer l'annulation d'une vraie erreur dans le .catch().
+ * Constantes et donnees par defaut du SDK.
+ * Aucune dependance DOM ni reseau.
  */
+
+/** Code d'erreur utilise quand l'utilisateur annule (bouton Annuler ou croix). Exporte pour la version beta. */
 export const PAYMENT_CANCELLED_CODE = 'CANCELLED'
 
-/**
- * Logo 41dev par défaut (icône carrée, currentColor pour s'adapter au thème).
- */
+/** Logo 41 Devs au format SVG inline. Utilise currentColor pour s'adapter au theme (clair/sombre). */
 export const DEFAULT_41DEV_LOGO_SVG =
   '<svg width="406" height="406" viewBox="0 0 406 406" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M135.102 235.245V0H0V405.207H202.604V235.245H135.102Z" fill="currentColor"/><path d="M270.105 170.243V405.207H405.207V7.34329e-05H202.604V170.243H270.105Z" fill="currentColor"/></svg>'
 
-/** Méthodes considérées comme Mobile Money (formulaire pays + téléphone). */
+/** Liste des moyens de paiement consideres comme Mobile Money (formulaire avec pays et telephone). */
 export const MOBILE_MONEY_METHODS = ['MTN', 'Moov', 'Celtis']
 
+/**
+ * Indique si un moyen de paiement est du Mobile Money.
+ * @param {string} method - Nom du moyen (ex. MTN, Moov, Carte bancaire).
+ * @returns {boolean} True si le moyen est dans MOBILE_MONEY_METHODS.
+ */
 export function isMobileMoney(method) {
   return MOBILE_MONEY_METHODS.includes(method)
 }
 
-/** Pays supportés par défaut (indicatif, longueur téléphone). */
+/**
+ * Liste des pays supportes par defaut.
+ * Chaque objet : code ISO, nom, drapeau (emoji), indicatif telephone, longueur min et max du numero.
+ */
 export const DEFAULT_COUNTRIES = [
-  { code: 'BJ', name: 'Bénin', flag: '🇧🇯', dial: '+229', minPhoneLength: 10, maxPhoneLength: 10 },
-  { code: 'CI', name: 'Côte d\'Ivoire', flag: '🇨🇮', dial: '+225', minPhoneLength: 8, maxPhoneLength: 8 },
-  { code: 'TG', name: 'Togo', flag: '🇹🇬', dial: '+228', minPhoneLength: 8, maxPhoneLength: 8 },
-  { code: 'SN', name: 'Sénégal', flag: '🇸🇳', dial: '+221', minPhoneLength: 9, maxPhoneLength: 9 },
+  { code: 'BJ', name: 'Benin', flag: 'BJ', dial: '+229', minPhoneLength: 10, maxPhoneLength: 10 },
+  { code: 'CI', name: 'Cote d\'Ivoire', flag: 'CI', dial: '+225', minPhoneLength: 8, maxPhoneLength: 8 },
+  { code: 'TG', name: 'Togo', flag: 'TG', dial: '+228', minPhoneLength: 8, maxPhoneLength: 8 },
+  { code: 'SN', name: 'Senegal', flag: 'SN', dial: '+221', minPhoneLength: 9, maxPhoneLength: 9 },
 ]
 
-/** Palette couleurs thème sombre. */
+/** Palette de couleurs pour le theme sombre (fond overlay, fond modal, texte, bordures, boutons). */
 export const DEFAULT_PALETTE_DARK = {
   overlayBg: 'rgba(15, 23, 42, 0.75)',
   modalBg: '#020617',
@@ -49,7 +57,7 @@ export const DEFAULT_PALETTE_DARK = {
   primaryButtonText: '#ffffff',
 }
 
-/** Palette couleurs thème clair. */
+/** Palette de couleurs pour le theme clair. */
 export const DEFAULT_PALETTE_LIGHT = {
   overlayBg: 'rgba(0, 0, 0, 0.6)',
   modalBg: '#ffffff',

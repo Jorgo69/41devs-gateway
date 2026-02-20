@@ -1,16 +1,13 @@
 # validation
 
-Règles de validation des formulaires (email, téléphone, carte). Logique pure, pas de DOM.
+Fonctions de validation des champs formulaire. Logique pure, pas de DOM. Chaque fonction retourne un objet { valid: boolean, error?: string }.
 
 ## index.js
 
-- **Rôle** : valider les champs saisis et retourner un résultat exploitable par les steps (affichage d’erreur).
-- **Exporte** (toutes les fonctions retournent `{ valid: boolean, error?: string }`) :
-  - `validateEmail(email)` — champs requis + format email.
-  - `validatePhoneForCountry(country, phoneDigits)` — pays requis + longueur du numéro (chiffres seuls) selon le pays.
-  - `validateCardNumber(cardNumberRaw)` — 12 à 19 chiffres.
-  - `validateExpiry(expiryRaw)` — format MM/AA, mois 1–12.
-  - `validateCvv(cvvRaw)` — 3 ou 4 chiffres.
-- **Reçoit** : les valeurs brutes (chaînes ou objet pays).
-- **Retourne** : `{ valid: true }` ou `{ valid: false, error: 'Message utilisateur' }`.
-- **Utilisé par** : steps (step2).
+- **validateEmail(email)** : verifie non vide et format email. Retourne valid true ou false avec message d'erreur.
+- **validatePhoneForCountry(country, phoneDigits)** : verifie que le pays est fourni et que le nombre de chiffres est entre minPhoneLength et maxPhoneLength du pays.
+- **validateCardNumber(cardNumberRaw)** : verifie 12 a 19 chiffres.
+- **validateExpiry(expiryRaw)** : verifie format MM/AA et mois entre 1 et 12.
+- **validateCvv(cvvRaw)** : verifie 3 ou 4 chiffres.
+
+Utilise par les etapes formulaire en version beta. Non utilise dans la version main (fenetre vide).

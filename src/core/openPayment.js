@@ -1,13 +1,16 @@
+/**
+ * Ouvre la fenetre de paiement : overlay + modal vide avec logo, signature "Propulse par 41 Devs", bouton Annuler et croix.
+ * Aucun formulaire ni champ. Fermeture via Annuler ou croix uniquement.
+ */
+
 import { getEffectiveTheme, buildPalette } from '../theme/index.js'
 import { getOrCreateOverlay, closeOverlay } from '../overlay/index.js'
 import * as ui from '../components/Helpers.js'
 
 /**
- * Ouvre une fenêtre vide : logo 41 Devs, « Propulsé par 41 Devs », bouton Annuler, X pour fermer.
- * Aucun formulaire, aucun champ. Au clic sur Annuler ou X, la fenêtre se ferme.
- *
- * @param {Object} baseConfig - Config globale (publicKey, theme, logoUrl, etc.)
- * @param {Object} options - Options de la session (optionnel)
+ * Affiche le modal et attache les elements (logo, signature, boutons). Pas de retour ni callback.
+ * @param {Object} baseConfig - Config globale passee a createGateway (publicKey, theme, logoUrl, etc.).
+ * @param {Object} options - Options optionnelles de la session (fusionnees avec baseConfig). Peut etre undefined.
  */
 export function openPayment(baseConfig, options) {
   const finalConfig = { ...baseConfig, ...(options ?? {}) }

@@ -1,16 +1,10 @@
 # overlay
 
-Gestion du conteneur plein écran qui porte le modal de paiement (création / suppression).
+Gestion du conteneur plein ecran (overlay) qui porte le modal. Creation et suppression dans le DOM.
 
 ## index.js
 
-- **Rôle** : créer ou récupérer l’élément overlay, et le retirer du DOM à la fermeture.
-- **Exporte** :
-  - `getOrCreateOverlay()`  
-    - **Reçoit** : rien.  
-    - **Retourne** : `HTMLElement` (div plein écran, id `fdg-overlay`). Crée l’élément s’il n’existe pas, sinon le réutilise.
-  - `closeOverlay()`  
-    - **Reçoit** : rien.  
-    - **Effet** : supprime l’overlay du DOM s’il existe.
-- **Contexte** : exécution navigateur (`document`, `document.body`).
-- **Utilisé par** : core (openPayment).
+- **getOrCreateOverlay()** : retourne l'element overlay existant ou en cree un (div fixe, plein ecran, centre, z-index 9999) et l'ajoute au body. Pas de parametre.
+- **closeOverlay()** : supprime l'element overlay du DOM s'il existe. Pas de parametre.
+
+Contexte navigateur (document, body). Utilise par core (openPayment).

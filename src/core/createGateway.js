@@ -1,11 +1,13 @@
+/**
+ * API publique du SDK. createGateway retourne un objet avec la methode openPayment.
+ */
+
 import { openPayment as openPaymentImpl } from './openPayment.js'
 
 /**
- * Initialise la gateway. Retourne un objet avec openPayment(options).
- * Au clic, openPayment ouvre la fenêtre (logo, Propulsé par 41 Devs, Annuler, X).
- *
- * @param {Object} globalConfig - publicKey, environment, theme, logoUrl, etc.
- * @returns {{ openPayment: (options: Object) => void }}
+ * Initialise la gateway avec la config globale. Chaque appel a openPayment ouvrira la fenetre avec cette config.
+ * @param {Object} globalConfig - publicKey, environment, theme, logoUrl, merchantLogoUrl, colors, etc. Optionnel.
+ * @returns {{ openPayment: (options?: Object) => void }} Objet avec une seule methode openPayment. openPayment() ne retourne rien.
  */
 export function createGateway(globalConfig = {}) {
   const baseConfig = {
@@ -20,5 +22,5 @@ export function createGateway(globalConfig = {}) {
   }
 }
 
-/** Alias pour éviter les conflits avec d'autres SDK. */
+/** Alias pour eviter les conflits de noms avec d'autres SDK dans le meme projet. */
 export { createGateway as create41DevsGateway }

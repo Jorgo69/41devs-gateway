@@ -1,16 +1,15 @@
 # constants
 
-Constantes et données par défaut du SDK (codes, logo, pays, palettes).
+Constantes et donnees par defaut du SDK (codes, logo SVG, pays, palettes de couleurs).
 
 ## index.js
 
-- **Rôle** : centralise tout ce qui est invariant (pas de DOM, pas d’appel réseau).
-- **Exporte** :
-  - `PAYMENT_CANCELLED_CODE` — chaîne `'CANCELLED'` pour détecter l’annulation dans le `.catch()`.
-  - `DEFAULT_41DEV_LOGO_SVG` — SVG inline du logo 41 Devs (currentColor).
-  - `MOBILE_MONEY_METHODS` — liste des moyens considérés comme Mobile Money (MTN, Moov, Celtis).
-  - `isMobileMoney(method)` — retourne `true` si le moyen est Mobile Money.
-  - `DEFAULT_COUNTRIES` — liste de pays (code, nom, indicatif, longueur min/max téléphone).
-  - `DEFAULT_PALETTE_DARK` / `DEFAULT_PALETTE_LIGHT` — couleurs par défaut pour thème sombre/clair.
-- **N’attend rien** (pas de paramètres) : ce sont des exports directs.
-- **Utilisé par** : theme, components, steps, core (openPayment).
+- **PAYMENT_CANCELLED_CODE** : chaine "CANCELLED", utilisee en version beta pour identifier l'annulation dans un .catch().
+- **DEFAULT_41DEV_LOGO_SVG** : logo 41 Devs en SVG inline (currentColor pour s'adapter au theme).
+- **MOBILE_MONEY_METHODS** : tableau des moyens consideres comme Mobile Money (MTN, Moov, Celtis).
+- **isMobileMoney(method)** : fonction qui retourne true si method est dans MOBILE_MONEY_METHODS.
+- **DEFAULT_COUNTRIES** : liste d'objets pays (code, name, flag, dial, minPhoneLength, maxPhoneLength).
+- **DEFAULT_PALETTE_DARK** : objet des couleurs pour le theme sombre (overlayBg, modalBg, textPrimary, etc.).
+- **DEFAULT_PALETTE_LIGHT** : objet des couleurs pour le theme clair.
+
+Aucun parametre : ce sont des exports. Utilise par theme, components et core.
