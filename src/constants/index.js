@@ -11,11 +11,27 @@ export const DEFAULT_41DEV_LOGO_SVG =
   '<svg width="406" height="406" viewBox="0 0 406 406" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M135.102 235.245V0H0V405.207H202.604V235.245H135.102Z" fill="currentColor"/><path d="M270.105 170.243V405.207H405.207V7.34329e-05H202.604V170.243H270.105Z" fill="currentColor"/></svg>'
 
 /** Méthodes considérées comme Mobile Money (formulaire pays + téléphone). */
-export const MOBILE_MONEY_METHODS = ['MTN', 'Moov', 'Celtis']
+export const MOBILE_MONEY_METHODS = ['MTN', 'Moov', 'Celtis', 'Wave', 'Orange']
 
 export function isMobileMoney(method) {
   return MOBILE_MONEY_METHODS.includes(method)
 }
+
+/**
+ * Mapping code opérateur AfribaPay (retourné par GET /operators) → enum PaymentMethod VEEP.
+ * Utilisé en mode AUTO pour construire le body de POST /developer/public/orders.
+ * @type {Record<string, string>}
+ */
+export const AFRIBAPAY_TO_VEEP_METHOD = {
+  orange: 'ORANGE_MONEY',
+  mtn: 'MTN_MOMO',
+  moov: 'MOOV_MONEY',
+  wave: 'WAVE',
+  card: 'CARD',
+}
+
+/** Codes opérateurs considérés comme carte bancaire (formulaire différent du mobile money). */
+export const CARD_OPERATOR_CODES = ['card']
 
 /** Pays supportés par défaut (indicatif, longueur téléphone). */
 export const DEFAULT_COUNTRIES = [

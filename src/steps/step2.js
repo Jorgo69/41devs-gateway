@@ -8,7 +8,7 @@ import * as validation from '../validation/index.js'
  * @param {string} methodLabel - MTN, Moov, Celtis ou Carte bancaire
  */
 export function renderStep2(ctx, methodLabel) {
-  const { modal, finalConfig, palette, countries, onSuccess, onCancel, onBack } = ctx
+  const { modal, finalConfig, palette, countries, onFormSubmit, onCancel, onBack } = ctx
   modal.innerHTML = ''
 
   ui.addCloseX(modal, palette, onCancel)
@@ -48,8 +48,19 @@ export function renderStep2(ctx, methodLabel) {
     errorBox.style.display = 'block'
   }
 
-  if (isMobileMoney(methodLabel)) {
-    const { wrapper: countryWrapper, getSelectedCountry } = ui.createCountrySelect(palette, countries)
+  // En mode AUTO, l'opérateur est une carte si son code vaut 'card', sinon Mobile Money.
+  // En mode GÉNÉRIQUE, on utilise la liste statique MOBILE_MONEY_METHODS.
+  const isMM = ctx.selectedOperator
+    ? ctx.selectedOperator.code !== 'card'
+    : isMobileMoney(methodLabel)
+
+  if (isMM) {
+    // En mode AUTO, le pays est déjà sélectionné dans step1 (ctx.selectedCountry).
+    const prefilledCountry = ctx.selectedCountry ?? null
+    const displayedCountries = prefilledCountry ? [prefilledCountry] : (countries ?? [])
+    const { wrapper: countryWrapper, getSelectedCountry } = prefilledCountry
+      ? buildPrefilledCountry(palette, prefilledCountry)
+      : ui.createCountrySelect(palette, displayedCountries)
     const { wrapper: w1, input: i1 } = ui.createInput(palette, 'Prénom', { placeholder: 'Ex. Jean' })
     const { wrapper: w2, input: i2 } = ui.createInput(palette, 'Nom', { placeholder: 'Ex. Dupont' })
     const { wrapper: w3, input: i3 } = ui.createInput(palette, 'Email', { placeholder: 'exemple@email.com', type: 'email', autocomplete: 'email' })
@@ -100,7 +111,7 @@ export function renderStep2(ctx, methodLabel) {
         email,
         telephone: phoneRaw,
       }
-      onSuccess(result)
+      onFormSubmit(result)
     })
   } else {
     const { wrapper: w0, input: i0 } = ui.createInput(palette, 'Email', { placeholder: 'exemple@email.com', type: 'email', autocomplete: 'email' })
@@ -149,7 +160,7 @@ export function renderStep2(ctx, methodLabel) {
         paymentReference: finalConfig.paymentReference,
         email,
       }
-      onSuccess(result)
+      onFormSubmit(result)
     })
   }
 
@@ -176,4 +187,25 @@ export function renderStep2(ctx, methodLabel) {
   footer.appendChild(submitBtn)
   modal.appendChild(footer)
   ui.addSignature(modal, palette)
+}
+
+/**
+ * Crée un champ pays pré-rempli (en lecture seule) quand le pays a déjà été sélectionné en step1.
+ * Retourne la même interface que ui.createCountrySelect pour une utilisation transparente.
+ * @param {Object} palette
+ * @param {{ code, name, flag, dial }} country - Pays sélectionné
+ * @returns {{ wrapper: HTMLElement, getSelectedCountry: () => Object }}
+ */
+function buildPrefilledCountry(palette, country) {
+  const wrapper = document.createElement('div')
+  wrapper.style.marginBottom = '14px'
+  const label = document.createElement('label')
+  label.textContent = 'Pays'
+  label.style.cssText = 'display:block;font-size:13px;color:' + palette.textSecondary + ';margin-bottom:4px'
+  const display = document.createElement('div')
+  display.style.cssText = 'padding:10px 12px;border-radius:8px;border:1px solid ' + palette.inputBorder + ';background:' + palette.inputBg + ';color:' + palette.inputText + ';font-size:14px'
+  display.textContent = `${country.flag ? country.flag + ' ' : ''}${country.name} (${country.dial})`
+  wrapper.appendChild(label)
+  wrapper.appendChild(display)
+  return { wrapper, getSelectedCountry: () => country }
 }

@@ -1,6 +1,6 @@
 {
-  "name": "41devs-gateway",
-  "version": "1.0.0",
+  "name": "@ibra69/41devs-gateway",
+  "version": "1.1.0",
   "description": "Module gateway passerelle de paiement de 41devs.",
   "main": "index.js",
   "type": "module",
@@ -27,7 +27,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Jorgo69/41devs-gateway"
+    "url": "git+https://github.com/Jorgo69/41devs-gateway.git"
   },
   "scripts": {
     "test": "vitest run",

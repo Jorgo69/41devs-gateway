@@ -19,8 +19,8 @@ describe('constants', () => {
     expect(DEFAULT_41DEV_LOGO_SVG).toContain('currentColor')
   })
 
-  it('MOBILE_MONEY_METHODS contains MTN, Moov, Celtis', () => {
-    expect(MOBILE_MONEY_METHODS).toEqual(['MTN', 'Moov', 'Celtis'])
+  it('MOBILE_MONEY_METHODS contains MTN, Moov, Celtis, Wave, Orange', () => {
+    expect(MOBILE_MONEY_METHODS).toEqual(['MTN', 'Moov', 'Celtis', 'Wave', 'Orange'])
   })
 
   it('isMobileMoney returns true for MTN, Moov, Celtis', () => {
