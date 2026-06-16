@@ -225,10 +225,12 @@ function loadOperatorsForCountry(ctx, zone, country, apiBaseUrl, publicKey) {
     })
 }
 
-// ── Mode GÉNÉRIQUE : liste statique ──────────────────────────────
+// ── Mode GÉNÉRIQUE : pays d'abord, méthodes ensuite ──────────────
 
 /**
- * Rend le step1 en mode GÉNÉRIQUE avec la liste de méthodes statique.
+ * Rend le step1 en mode GÉNÉRIQUE.
+ * Flux : sélection du pays → affichage des boutons de méthode.
+ * Le pays sélectionné alimente ctx.selectedCountry pour la validation téléphone en step2.
  * @param {Object} ctx
  */
 function renderGenericMode(ctx) {
@@ -236,33 +238,84 @@ function renderGenericMode(ctx) {
 
   const title = buildTitle(finalConfig, palette)
   const amountLine = buildAmountLine(finalConfig, palette)
-  const methodsTitle = buildMethodsTitle(palette)
-
-  const methodsWrapper = document.createElement('div')
-  methodsWrapper.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px'
-
-  const methods = finalConfig.methods ?? ['MTN', 'Moov', 'Wave', 'Carte bancaire']
-  methods.forEach((label) => {
-    const btn = document.createElement('button')
-    btn.type = 'button'
-    btn.textContent = label
-    btn.style.cssText = 'padding:10px 12px;border-radius:999px;border:1px solid ' + palette.border + ';background:' + palette.buttonBg + ';cursor:pointer;font-size:13px;color:' + palette.buttonText
-    btn.addEventListener('mouseenter', () => { btn.style.background = palette.buttonBgHover })
-    btn.addEventListener('mouseleave', () => { btn.style.background = palette.buttonBg })
-    btn.addEventListener('click', () => {
-      ctx.selectedOperator = null
-      ctx.selectedCountry = null
-      ctx.onMethodSelect(label, null)
-    })
-    methodsWrapper.appendChild(btn)
-  })
 
   modal.appendChild(title)
   modal.appendChild(amountLine)
-  modal.appendChild(methodsTitle)
-  modal.appendChild(methodsWrapper)
+
+  // ── Sélecteur de pays ─────────────────────────────────────────
+  const countryWrapper = document.createElement('div')
+  countryWrapper.style.marginBottom = '12px'
+
+  const countryLabel = document.createElement('label')
+  countryLabel.textContent = 'Votre pays'
+  countryLabel.style.cssText = 'display:block;font-size:13px;color:' + palette.textSecondary + ';margin-bottom:4px'
+
+  const countrySelect = document.createElement('select')
+  countrySelect.style.cssText = 'width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid ' + palette.inputBorder + ';background:' + palette.inputBg + ';color:' + palette.inputText + ';font-size:14px'
+
+  const placeholder = document.createElement('option')
+  placeholder.value = ''
+  placeholder.textContent = '— Choisissez votre pays —'
+  placeholder.disabled = true
+  placeholder.selected = true
+  countrySelect.appendChild(placeholder)
+
+  const availableCountries = finalConfig.countries ?? ctx.countries ?? []
+  availableCountries.forEach((c) => {
+    const opt = document.createElement('option')
+    opt.value = c.code
+    opt.textContent = `${c.flag ? c.flag + ' ' : ''}${c.name} (${c.dial ?? ('+' + c.prefix)})`
+    countrySelect.appendChild(opt)
+  })
+
+  countryWrapper.appendChild(countryLabel)
+  countryWrapper.appendChild(countrySelect)
+  modal.appendChild(countryWrapper)
+
+  // ── Zone méthodes (vide jusqu'à sélection du pays) ────────────
+  const methodsZone = document.createElement('div')
+  methodsZone.style.marginBottom = '16px'
+
+  const hint = document.createElement('p')
+  hint.style.cssText = 'font-size:13px;color:' + palette.textSecondary + ';text-align:center;margin:12px 0'
+  hint.textContent = 'Sélectionnez votre pays pour voir les moyens de paiement disponibles.'
+  methodsZone.appendChild(hint)
+
+  modal.appendChild(methodsZone)
   addCancelFooter(modal, palette, onCancel)
   ui.addSignature(modal, palette)
+
+  // ── Affichage des méthodes AU CHOIX du pays ───────────────────
+  countrySelect.addEventListener('change', () => {
+    const selected = availableCountries.find((c) => c.code === countrySelect.value)
+    if (!selected) return
+
+    ctx.selectedCountry = selected
+
+    methodsZone.innerHTML = ''
+    const methodsTitle = buildMethodsTitle(palette)
+    methodsZone.appendChild(methodsTitle)
+
+    const methodsWrapper = document.createElement('div')
+    methodsWrapper.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px'
+
+    const methods = finalConfig.methods ?? ['MTN', 'Moov', 'Wave', 'Carte bancaire']
+    methods.forEach((label) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.textContent = label
+      btn.style.cssText = 'padding:10px 12px;border-radius:999px;border:1px solid ' + palette.border + ';background:' + palette.buttonBg + ';cursor:pointer;font-size:13px;color:' + palette.buttonText
+      btn.addEventListener('mouseenter', () => { btn.style.background = palette.buttonBgHover })
+      btn.addEventListener('mouseleave', () => { btn.style.background = palette.buttonBg })
+      btn.addEventListener('click', () => {
+        ctx.selectedOperator = null
+        ctx.onMethodSelect(label, null)
+      })
+      methodsWrapper.appendChild(btn)
+    })
+
+    methodsZone.appendChild(methodsWrapper)
+  })
 }
 
 // ── Helpers DOM partagés ──────────────────────────────────────────
