@@ -1,21 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createGateway } from '@gateway/index.js'
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-// Gateway en mode GÉNÉRIQUE — simule un appel backend
+// Gateway en mode AUTO — clé VEEP réelle, API VEEP production
 const demoGateway = createGateway({
   theme: 'auto',
-  onSubmit: async (formData) => {
-    await sleep(1800)
-    return { orderId: 'DEMO-' + Math.floor(Math.random() * 90000 + 10000), status: 'PENDING' }
-  },
-  onPoll: async (orderId) => {
-    await sleep(3500)
-    return { status: 'CONFIRMED', success: true, orderNumber: orderId, email: '' }
-  },
+  publicKey: 'vp_live_6abe3748e66eb978760909b8d51d9a6d51f8fcee82fd171d1531324f2191cb6b',
+  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 })
 
 export default function Demo({ t }) {
@@ -28,9 +18,7 @@ export default function Demo({ t }) {
     setLastResult(null)
     try {
       const result = await demoGateway.openPayment({
-        amount: 25000,
-        currency: 'XOF',
-        methods: ['MTN', 'Orange', 'Moov', 'Wave'],
+        eventId: '1662b823-4f7d-4267-a69d-2f2279c1dd36',
       })
       setLastResult({ ok: true, data: result })
     } catch (e) {
@@ -234,43 +222,36 @@ export default function Demo({ t }) {
                 </CodeLine>
                 <br />
                 <CodeLine>
-                  <Cm>// Mode GÉNÉRIQUE — votre propre backend</Cm>
+                  <Cm>// Mode AUTO — VEEP gère pays, opérateurs et commande</Cm>
                 </CodeLine>
                 <CodeLine>
                   <Kw>const</Kw> gateway = <Fn>createGateway</Fn>{'({'}
                 </CodeLine>
                 <CodeLine indent>
-                  <Fn>onSubmit</Fn>{': async (formData) => {'}
+                  publicKey: <Str>'vp_live_xxx'</Str>,
                 </CodeLine>
-                <CodeLine indent2>
-                  <Kw>const</Kw> res = <Kw>await</Kw> <Fn>fetch</Fn>(<Str>'/api/orders'</Str>, {'{'} ... {'}'})
-                </CodeLine>
-                <CodeLine indent2>
-                  <Kw>return</Kw> res.<Fn>json</Fn>() <Cm>// {'{ orderId }'}</Cm>
-                </CodeLine>
-                <CodeLine indent>{'}'},{''}</CodeLine>
                 <CodeLine indent>
-                  <Fn>onPoll</Fn>{': async (orderId) => {'}
+                  apiBaseUrl: <Str>'https://api.dev.veep.fun/api/v1'</Str>,
                 </CodeLine>
-                <CodeLine indent2>
-                  <Kw>const</Kw> res = <Kw>await</Kw> <Fn>fetch</Fn>(<Str>{`\`/api/orders/\${orderId}\``}</Str>)
-                </CodeLine>
-                <CodeLine indent2>
-                  <Kw>return</Kw> res.<Fn>json</Fn>() <Cm>// {'{ status }'}</Cm>
-                </CodeLine>
-                <CodeLine indent>{'}'},{''}</CodeLine>
                 <CodeLine>{'});'}</CodeLine>
                 <br />
                 <CodeLine>
-                  <Cm>// Un clic → modal complète</Cm>
+                  <Cm>// Un clic → parcours complet (tickets → pays → paiement)</Cm>
                 </CodeLine>
                 <CodeLine>
                   <Kw>await</Kw> gateway.<Fn>openPayment</Fn>({'({'})
                 </CodeLine>
                 <CodeLine indent>
-                  amount: <Num>25000</Num>, currency: <Str>'XOF'</Str>,
+                  eventId: <Str>'uuid-de-l-evenement'</Str>,
                 </CodeLine>
                 <CodeLine>{'});'}</CodeLine>
+                <br />
+                <CodeLine>
+                  <Cm>// 1 bouton = 1 event. Plusieurs events → plusieurs boutons.</Cm>
+                </CodeLine>
+                <CodeLine>
+                  <Cm>// L'image cover est récupérée automatiquement depuis VEEP.</Cm>
+                </CodeLine>
               </pre>
             </div>
           </div>

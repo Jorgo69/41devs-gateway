@@ -13,4 +13,8 @@ export default defineConfig({
       '@gateway': resolve(__dirname, '..'),
     },
   },
+  server: {
+    // Surveiller le dossier SDK parent pour le HMR automatique
+    watch: { paths: [resolve(__dirname, '../src')] },
+  },
 })

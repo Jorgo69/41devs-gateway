@@ -53,13 +53,12 @@ const gateway = createGateway({
   apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 })
 
-// Au clic "Acheter"
+// 1 event → gateway liste les tickets, user choisit
+await gateway.openPayment({ eventId: 'uuid-de-l-evenement' })
+
+// Plusieurs events → user choisit d'abord l'event
 await gateway.openPayment({
-  eventId: 'uuid-de-l-evenement',   // requis
-  ticketId: 'uuid-du-ticket',        // requis
-  quantity: 1,
-  amount: 25000,
-  currency: 'XOF',
+  eventIds: ['uuid-event-1', 'uuid-event-2'],
 })`,
   },
   {

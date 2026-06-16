@@ -5,6 +5,7 @@ import Hero from './components/Hero.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
 import Demo from './components/Demo.jsx'
 import Snippets from './components/Snippets.jsx'
+import Customization from './components/Customization.jsx'
 import VeepIntegration from './components/VeepIntegration.jsx'
 import Footer from './components/Footer.jsx'
 
@@ -30,6 +31,7 @@ export default function App() {
         <HowItWorks t={t} />
         <Demo t={t} />
         <Snippets t={t} />
+        <Customization t={t} />
         <VeepIntegration t={t} />
       </main>
       <Footer t={t} />
