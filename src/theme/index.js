@@ -1,32 +1,40 @@
-import { DEFAULT_PALETTE_DARK, DEFAULT_PALETTE_LIGHT } from '../constants/index.js'
-
 /**
- * Détermine le thème effectif à partir de la config (auto = préférence système).
- * @param {string} requestedTheme - 'light' | 'dark' | 'auto'
- * @returns {string} 'light' | 'dark'
+ * Palette VEEP — dark orange par défaut.
+ * L'intégrateur peut surcharger via colors: { primary, primaryHover, primaryDim }
  */
 export function getEffectiveTheme(requestedTheme) {
-  if (requestedTheme !== 'auto') return requestedTheme
-  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark'
-  }
-  return 'light'
+  return 'dark' // VEEP est toujours dark
 }
 
-/**
- * Construit la palette de couleurs (thème + couleur primaire personnalisée).
- * @param {string} effectiveTheme - 'light' | 'dark'
- * @param {Object} customColors - { light?: { primary }, dark?: { primary } }
- * @returns {Object} palette d'applications des couleurs
- */
-export function buildPalette(effectiveTheme, customColors = {}) {
-  const basePalette = effectiveTheme === 'dark' ? DEFAULT_PALETTE_DARK : DEFAULT_PALETTE_LIGHT
-  const customPrimary = effectiveTheme === 'dark' ? customColors.dark?.primary : customColors.light?.primary
+export function buildPalette(_effectiveTheme, customColors = {}) {
+  const primary = customColors.primary ?? '#FF4D00'
+  const primaryHover = customColors.primaryHover ?? '#FF6120'
+  const primaryDim = customColors.primaryDim ?? 'rgba(255,77,0,0.15)'
+
   return {
-    ...basePalette,
-    ...(customPrimary && {
-      primaryButtonBg: customPrimary,
-      primaryButtonText: '#ffffff',
-    }),
+    overlayBg: 'rgba(0,0,0,0.78)',
+    modalBg: '#0D0D0D',
+    surface: '#1A1A1A',
+    surface2: '#242424',
+    border: 'rgba(255,255,255,0.08)',
+    textPrimary: '#F5F5F5',
+    textSecondary: 'rgba(245,245,245,0.6)',
+    textMuted: 'rgba(245,245,245,0.35)',
+    primaryButtonBg: primary,
+    primaryButtonBgHover: primaryHover,
+    primaryButtonText: '#ffffff',
+    primaryDim,
+    amountText: primary,
+    inputBg: '#1A1A1A',
+    inputBorder: 'rgba(255,255,255,0.08)',
+    inputBorderFocus: primary,
+    inputText: '#F5F5F5',
+    cancelBg: 'transparent',
+    cancelBorder: 'rgba(255,255,255,0.12)',
+    cancelText: 'rgba(245,245,245,0.55)',
+    buttonBg: '#1A1A1A',
+    buttonBgHover: '#242424',
+    selectedBorder: primary,
+    selectedBg: primaryDim,
   }
 }

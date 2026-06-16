@@ -32,7 +32,7 @@ export function renderStep2(ctx, methodLabel) {
   subtitle.style.margin = '0 0 16px'
   subtitle.style.fontSize = '14px'
   subtitle.style.color = palette.textSecondary
-  subtitle.textContent = `Montant : ${finalConfig.amount ?? '—'} ${finalConfig.currency ?? ''}`
+  subtitle.textContent = `Montant : ${finalConfig.amount ?? '—'} ${finalConfig.currency ?? 'XOF'}`
   modal.appendChild(title)
   modal.appendChild(subtitle)
 

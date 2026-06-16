@@ -1,26 +1,24 @@
-import { PAYMENT_CANCELLED_CODE, DEFAULT_COUNTRIES, AFRIBAPAY_TO_VEEP_METHOD } from '../constants/index.js'
+import { PAYMENT_CANCELLED_CODE, AFRIBAPAY_TO_VEEP_METHOD } from '../constants/index.js'
 import { getEffectiveTheme, buildPalette } from '../theme/index.js'
 import { getOrCreateOverlay, closeOverlay } from '../overlay/index.js'
+import { renderStepEvent } from '../steps/step0-tickets.js'
 import { renderStep1 } from '../steps/step1.js'
-import { renderStep2 } from '../steps/step2.js'
 import { renderStep3 } from '../steps/step3.js'
 import { renderStep4 } from '../steps/step4.js'
 
 /**
  * Ouvre la fenêtre de paiement et retourne une Promise.
  *
- * Deux modes supportés :
- *
  * Mode AUTO (SDK gère tout — VEEP + AfribaPay) :
  *   createGateway({ publicKey: 'vp_live_xxx', apiBaseUrl: 'https://...' })
- *   openPayment({ eventId, ticketId, quantity, amount, currency })
+ *   openPayment({ eventId })   → cover event + tickets avec sélecteurs qtés → formulaire → paiement
  *
  * Mode GÉNÉRIQUE (intégrateur contrôle les appels API) :
  *   createGateway({ onSubmit: async (formData) => { orderId }, onPoll: async (orderId) => { status } })
- *   openPayment({ amount, currency, methods: ['MTN', 'Moov'] })
+ *   openPayment({ amount, methods: ['MTN', 'Moov'] })
  *
  * @param {Object} baseConfig - Config globale passée à createGateway
- * @param {Object} options - Options de la session (amount, currency, ticketId, eventId, callbacks…)
+ * @param {Object} options    - Options de la session
  * @returns {Promise<Object>}
  */
 export function openPayment(baseConfig, options) {
@@ -31,7 +29,7 @@ export function openPayment(baseConfig, options) {
     const finalConfig = { ...baseConfig, ...(options ?? {}) }
     const isAutoMode = !!(finalConfig.apiBaseUrl && finalConfig.publicKey)
 
-    // ── Résolution de la Promise ──────────────────────────────────
+    // ── Résolution Promise ────────────────────────────────────────
 
     function finishWithSuccess(result) {
       if (settled) return
@@ -57,48 +55,81 @@ export function openPayment(baseConfig, options) {
       closeOverlay()
     }
 
-    // ── Setup modal ───────────────────────────────────────────────
+    // ── Palette + modal ───────────────────────────────────────────
 
-    const requestedTheme = finalConfig.theme ?? baseConfig.theme ?? 'auto'
-    const effectiveTheme = getEffectiveTheme(requestedTheme)
+    const effectiveTheme = getEffectiveTheme(finalConfig.theme ?? baseConfig.theme ?? 'auto')
     const palette = buildPalette(effectiveTheme, finalConfig.colors ?? {})
-    const countries = finalConfig.countries ?? DEFAULT_COUNTRIES
 
     const overlay = getOrCreateOverlay()
     overlay.style.background = palette.overlayBg
     overlay.innerHTML = ''
 
     const modal = document.createElement('div')
+
+    // Largeur : 560px pour le mode event (cover plein-bord), 380px pour mode générique sans event
+    const hasEventId = !!(isAutoMode && finalConfig.eventId)
+    const modalWidth = hasEventId
+      ? (finalConfig.eventsModalWidth ?? '560px')
+      : (finalConfig.paymentModalWidth ?? '380px')
+
+    // overflow:hidden → clips border-radius ; overflow-y:auto → scroll vertical
+    // (overflow-y:auto prend le dessus sur overflow-y:hidden de overflow:hidden)
     modal.style.cssText = [
-      'position:relative;border-radius:12px;padding:24px;width:380px;max-width:92%',
+      'position:relative;border-radius:22px;overflow:hidden;overflow-y:auto',
+      'width:' + modalWidth + ';max-width:95vw',
       'background:' + palette.modalBg + ';color:' + palette.textPrimary,
-      'box-shadow:0 10px 30px rgba(0,0,0,0.25)',
+      'box-shadow:0 20px 60px rgba(0,0,0,0.5)',
       'font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-      'max-height:90vh;overflow-y:auto',
+      'max-height:92vh',
+      'border:0.5px solid rgba(255,255,255,0.1)',
     ].join(';')
     overlay.appendChild(modal)
 
-    // ── Contexte partagé entre les steps ─────────────────────────
+    // stepContainer : les steps écrivent ici (innerHTML = '' sur ce container,
+    // pas sur modal, pour préserver les éléments persistants comme le close X)
+    const stepContainer = document.createElement('div')
+    modal.appendChild(stepContainer)
+
+    // En mode générique (sans event), ajouter un close X persistant hors du stepContainer
+    if (!hasEventId) {
+      const closeX = document.createElement('button')
+      closeX.type = 'button'
+      closeX.setAttribute('aria-label', 'Fermer')
+      closeX.textContent = '×'
+      closeX.style.cssText = 'position:absolute;top:12px;right:14px;z-index:10;width:32px;height:32px;padding:0;border:none;border-radius:8px;background:transparent;color:rgba(245,245,245,0.5);font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center'
+      closeX.addEventListener('click', () => finishWithCancel())
+      modal.appendChild(closeX)
+    }
+
+    // ── Contexte partagé ─────────────────────────────────────────
 
     const ctx = {
-      modal,
+      modal: stepContainer,  // les steps écrivent dans stepContainer, pas modal
       finalConfig,
       baseConfig,
       palette,
-      countries,
       isAutoMode,
       selectedOperator: null,
       selectedCountry: null,
+      selectedQuantities: {},
+      _availableTickets: [],
+      _event: null,
       onCancel: finishWithCancel,
     }
 
-    ctx.onBack = () => renderStep1(ctx)
-    ctx.onMethodSelect = (methodLabel, operator) => {
-      ctx.selectedOperator = operator
-      renderStep2(ctx, methodLabel)
+    // Navigation : tickets → formulaire
+    ctx.onProceed = () => renderStep1(ctx)
+
+    // Navigation : formulaire → retour tickets (event mode) ou annulation (mode générique)
+    ctx.onBack = () => {
+      if (isAutoMode && finalConfig.eventId) {
+        renderStepEvent(ctx)
+      } else {
+        finishWithCancel()
+      }
     }
 
-    // ── Callback step2 → step3 + appel API ───────────────────────
+    // ── Callback formulaire → loading + appel API ─────────────────
 
     ctx.onFormSubmit = async (formData) => {
       if (isClosed) return
@@ -106,40 +137,39 @@ export function openPayment(baseConfig, options) {
 
       try {
         if (isAutoMode) {
-          await handleAutoMode(ctx, formData, {
-            finishWithSuccess,
-            finishWithError,
-            isClosed: () => isClosed,
-          })
+          await handleAutoMode(ctx, formData, { finishWithSuccess, finishWithError, isClosed: () => isClosed })
         } else {
-          await handleGenericMode(ctx, formData, {
-            finishWithSuccess,
-            finishWithError,
-            isClosed: () => isClosed,
-          })
+          await handleGenericMode(ctx, formData, { finishWithSuccess, finishWithError, isClosed: () => isClosed })
         }
       } catch (err) {
         if (isClosed) return
         renderStep4(ctx, {
           success: false,
           error: err?.message ?? 'Une erreur inattendue est survenue.',
-          onRetry: () => renderStep1(ctx),
+          onRetry: () => {
+            if (isAutoMode && finalConfig.eventId) renderStepEvent(ctx)
+            else renderStep1(ctx)
+          },
         })
         finishWithError(err)
       }
     }
 
-    renderStep1(ctx)
+    // ── Première étape ────────────────────────────────────────────
+
+    if (isAutoMode && finalConfig.eventId) {
+      renderStepEvent(ctx)
+    } else {
+      renderStep1(ctx)
+    }
   })
 }
 
 // ── Mode AUTO ────────────────────────────────────────────────────
 
 /**
- * Appelle POST /orders sur VEEP puis lance le polling.
- * @param {Object} ctx
- * @param {Object} formData - Données du formulaire step2
- * @param {{ finishWithSuccess, finishWithError, isClosed }} handlers
+ * Construit les items depuis selectedQuantities et appelle POST /orders.
+ * Puis poll jusqu'à confirmation.
  */
 async function handleAutoMode(ctx, formData, handlers) {
   const { finalConfig } = ctx
@@ -149,9 +179,20 @@ async function handleAutoMode(ctx, formData, handlers) {
   const publicKey = finalConfig.publicKey ?? ctx.baseConfig?.publicKey
 
   const method = AFRIBAPAY_TO_VEEP_METHOD[ctx.selectedOperator?.code]
+
+  // Construire les items depuis les sélections de quantité
+  const items = Object.entries(ctx.selectedQuantities ?? {})
+    .filter(([, qty]) => qty > 0)
+    .map(([ticketId, quantity]) => ({ ticketId, quantity }))
+
+  // Fallback si pas de sélection (mode sans étape tickets)
+  const resolvedItems = items.length > 0
+    ? items
+    : (finalConfig.items ?? [{ ticketId: finalConfig.ticketId, quantity: finalConfig.quantity ?? 1 }])
+
   const orderBody = {
     eventId: finalConfig.eventId,
-    items: finalConfig.items ?? [{ ticketId: finalConfig.ticketId, quantity: finalConfig.quantity ?? 1 }],
+    items: resolvedItems,
     buyerPhone: formData.fullPhone,
     buyerEmail: formData.email,
     buyerFirstname: formData.prenom,
@@ -192,19 +233,17 @@ async function handleAutoMode(ctx, formData, handlers) {
     renderStep4(ctx, { success: true, result: { ...pollResult.data, email: formData.email } })
     finishWithSuccess(pollResult.data)
   } else {
-    renderStep4(ctx, { success: false, error: pollResult.error, onRetry: () => renderStep1(ctx) })
+    renderStep4(ctx, {
+      success: false,
+      error: pollResult.error,
+      onRetry: () => renderStepEvent(ctx),
+    })
     finishWithError(new Error(pollResult.error))
   }
 }
 
 // ── Mode GÉNÉRIQUE ───────────────────────────────────────────────
 
-/**
- * Délègue les appels API à onSubmit/onPoll fournis par l'intégrateur.
- * @param {Object} ctx
- * @param {Object} formData
- * @param {{ finishWithSuccess, finishWithError, isClosed }} handlers
- */
 async function handleGenericMode(ctx, formData, handlers) {
   const { finalConfig } = ctx
   const { finishWithSuccess, finishWithError, isClosed } = handlers
@@ -243,13 +282,6 @@ async function handleGenericMode(ctx, formData, handlers) {
 
 // ── Polling ──────────────────────────────────────────────────────
 
-/**
- * Interroge l'endpoint de statut VEEP toutes les 2s jusqu'à CONFIRMED, FAILED ou timeout (2 min).
- * @param {string} url
- * @param {string} publicKey
- * @param {() => boolean} isClosed
- * @returns {Promise<{ success: boolean, data?: Object, error?: string }>}
- */
 async function pollUntilConfirmed(url, publicKey, isClosed, maxMs = 120000, intervalMs = 2000) {
   const start = Date.now()
   while (Date.now() - start < maxMs) {
@@ -263,18 +295,12 @@ async function pollUntilConfirmed(url, publicKey, isClosed, maxMs = 120000, inte
         return { success: false, data, error: "Paiement échoué ou annulé par l'opérateur." }
       }
     } catch {
-      // Erreur réseau temporaire — on continue le polling
+      // Erreur réseau temporaire — on continue
     }
   }
   return { success: false, error: 'Délai dépassé (2 min). Vérifiez votre email si le paiement a été débité.' }
 }
 
-/**
- * Polling via callback onPoll fourni par l'intégrateur.
- * @param {Function} onPoll - async (orderId) => { status, success? }
- * @param {string} orderId
- * @param {() => boolean} isClosed
- */
 async function pollGeneric(onPoll, orderId, isClosed, maxMs = 120000, intervalMs = 2000) {
   const start = Date.now()
   while (Date.now() - start < maxMs) {
@@ -296,10 +322,6 @@ async function pollGeneric(onPoll, orderId, isClosed, maxMs = 120000, intervalMs
 
 // ── Utilitaires ──────────────────────────────────────────────────
 
-/**
- * Fetch JSON avec Authorization: Bearer.
- * Unwrap la réponse VEEP { statusCode, data } si présente.
- */
 async function fetchApi(url, opts = {}) {
   const { method = 'GET', publicKey, body } = opts
   const headers = {}
