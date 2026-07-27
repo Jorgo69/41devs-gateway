@@ -27,7 +27,7 @@ const STEPS = [
       en: 'Fetch your published events and available tickets.',
     },
     code: `// Vos événements publiés
-const res = await fetch('https://api.dev.veep.fun/api/v1/developer/public/events', {
+const res = await fetch('https://api.prod.veep.fun/api/v1/developer/public/events', {
   headers: { 'Authorization': 'Bearer vp_live_VOTRE_CLE' },
 })
 const { items } = await res.json()
@@ -35,7 +35,7 @@ const { items } = await res.json()
 
 // Tickets d'un événement
 const tickets = await fetch(
-  'https://api.dev.veep.fun/api/v1/developer/public/events/EVENT_ID/tickets',
+  'https://api.prod.veep.fun/api/v1/developer/public/events/EVENT_ID/tickets',
   { headers: { 'Authorization': 'Bearer vp_live_VOTRE_CLE' } }
 )`,
   },
@@ -48,9 +48,10 @@ const tickets = await fetch(
     },
     code: `import { createGateway } from '@ibra69/41devs-gateway'
 
+// apiBaseUrl et la clé KKiaPay sont déjà configurées dans le SDK —
+// seule votre publicKey est nécessaire.
 const gateway = createGateway({
   publicKey: 'vp_live_VOTRE_CLE',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 })
 
 // 1 event → gateway liste les tickets, user choisit
@@ -70,12 +71,26 @@ await gateway.openPayment({
     },
     code: `// Statut d'une commande (côté serveur ou côté client)
 const status = await fetch(
-  'https://api.dev.veep.fun/api/v1/developer/public/orders/ORDER_ID',
+  'https://api.prod.veep.fun/api/v1/developer/public/orders/ORDER_ID',
   { headers: { 'Authorization': 'Bearer vp_live_VOTRE_CLE' } }
 )
 const order = await status.json()
 // order.status → 'PENDING' | 'CONFIRMED' | 'FAILED'
 // order.orderNumber → "ORD-2026-XXXXX"`,
+  },
+  {
+    num: '06',
+    title: { fr: 'Paiement carte — automatique', en: 'Card payment — automatic' },
+    desc: {
+      fr: 'La carte bancaire (Visa, Mastercard, Verve) est toujours proposée en plus des opérateurs mobile money, quel que soit le pays de l\'acheteur. Rien à configurer : le SDK ouvre le widget KKiaPay et ne voit jamais le numéro de carte, l\'expiration ou le CVV.',
+      en: 'Card payment (Visa, Mastercard, Verve) is always offered alongside mobile money operators, regardless of the buyer\'s country. Nothing to configure: the SDK opens the KKiaPay widget and never sees the card number, expiry or CVV.',
+    },
+    code: `// Rien à faire de plus — "Carte bancaire" apparaît
+// automatiquement dans la liste, pour tous les pays.
+await gateway.openPayment({ eventId: 'uuid-de-l-evenement' })
+
+// Prénom/nom/email/téléphone déjà saisis pré-remplissent
+// le widget KKiaPay — l'acheteur ne retape rien.`,
   },
 ]
 
@@ -86,6 +101,7 @@ const ENDPOINTS = [
   { method: 'GET', path: '/developer/public/operators?country=BJ', desc: { fr: 'Opérateurs par pays', en: 'Operators by country' }, scope: '—' },
   { method: 'POST', path: '/developer/public/orders', desc: { fr: 'Créer une commande', en: 'Create an order' }, scope: 'orders:write' },
   { method: 'GET', path: '/developer/public/orders/:id', desc: { fr: 'Statut d\'une commande', en: 'Order status' }, scope: 'orders:read' },
+  { method: 'POST', path: '/developer/public/orders/:id/verify-card', desc: { fr: 'Vérifier un paiement carte (après le widget KKiaPay)', en: 'Verify a card payment (after the KKiaPay widget)' }, scope: 'orders:write' },
 ]
 
 export default function VeepIntegration({ t }) {
@@ -132,8 +148,8 @@ export default function VeepIntegration({ t }) {
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
             {lang === 'fr'
-              ? 'De la clé API à la première commande — en 5 étapes.'
-              : 'From API key to first order — in 5 steps.'}
+              ? 'De la clé API à la première commande.'
+              : 'From API key to first order.'}
           </p>
         </div>
 
@@ -373,7 +389,7 @@ export default function VeepIntegration({ t }) {
             ))}
           </div>
           <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-muted)' }}>
-            Base URL : <code style={{ color: 'var(--primary)', fontFamily: 'monospace', fontSize: 12 }}>https://api.dev.veep.fun/api/v1</code>
+            Base URL : <code style={{ color: 'var(--primary)', fontFamily: 'monospace', fontSize: 12 }}>https://api.prod.veep.fun/api/v1</code>
             {' '}— Auth : <code style={{ color: 'var(--text)', fontFamily: 'monospace', fontSize: 12 }}>Authorization: Bearer vp_live_xxx</code>
           </p>
         </div>

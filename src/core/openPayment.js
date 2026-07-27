@@ -5,6 +5,7 @@ import { renderStepEvent } from '../steps/step0-tickets.js'
 import { renderStep1 } from '../steps/step1.js'
 import { renderStep3 } from '../steps/step3.js'
 import { renderStep4 } from '../steps/step4.js'
+import { payWithKkiapay, closeKkiapayWidget } from './kkiapayWidget.js'
 
 /**
  * Ouvre la fenêtre de paiement et retourne une Promise.
@@ -50,6 +51,7 @@ export function openPayment(baseConfig, options) {
       if (settled) return
       settled = true
       isClosed = true
+      closeKkiapayWidget() // no-op si aucun paiement carte n'était en cours
       typeof finalConfig.onCancel === 'function' && finalConfig.onCancel()
       reject({ code: PAYMENT_CANCELLED_CODE, message: "Paiement annulé par l'utilisateur." })
       closeOverlay()
@@ -219,6 +221,45 @@ async function handleAutoMode(ctx, formData, handlers) {
     renderStep4(ctx, { success: true, result: { ...orderResp, email: formData.email } })
     finishWithSuccess(orderResp)
     return
+  }
+
+  // Carte : pas de push serveur — le widget KKiaPay gère la saisie côté client,
+  // puis on fait vérifier le transactionId reçu par VEEP.
+  if (method === 'CARD') {
+    let cardResult
+    try {
+      const { transactionId } = await payWithKkiapay({
+        amount: orderResp.total,
+        orderId,
+        name: `${formData.prenom} ${formData.nom}`.trim(),
+        email: formData.email,
+        phone: formData.fullPhone,
+      })
+      if (isClosed()) return
+      cardResult = await fetchApi(`${apiBaseUrl}/developer/public/orders/${orderId}/verify-card`, {
+        method: 'POST',
+        publicKey,
+        body: JSON.stringify({ transactionId }),
+      })
+    } catch (err) {
+      if (isClosed()) return
+      renderStep4(ctx, {
+        success: false,
+        error: err?.message ?? 'Paiement par carte refusé.',
+        onRetry: () => renderStepEvent(ctx),
+      })
+      finishWithError(err)
+      return
+    }
+
+    if (isClosed()) return
+
+    if (cardResult.status === 'SUCCESS') {
+      renderStep4(ctx, { success: true, result: { ...orderResp, email: formData.email } })
+      finishWithSuccess({ ...orderResp, ...cardResult })
+      return
+    }
+    // PENDING_WEBHOOK — KKiaPay confirmera via webhook, on bascule sur le polling habituel
   }
 
   const pollResult = await pollUntilConfirmed(

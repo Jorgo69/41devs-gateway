@@ -8,6 +8,9 @@
  * Stocke ctx._availableTickets pour que le step 2 puisse afficher le total.
  * Met à jour ctx.selectedQuantities { [ticketId]: qty }.
  */
+import { skeletonBlock } from '../components/Skeleton.js'
+import { DEFAULT_EVENT_COVER_DATA_URI } from '../constants/index.js'
+
 export async function renderStepEvent(ctx) {
   const { modal, finalConfig, palette, onCancel, isAutoMode } = ctx
 
@@ -40,7 +43,7 @@ export async function renderStepEvent(ctx) {
     tickets = finalConfig.tickets ?? []
   }
 
-  const availableTickets = tickets.filter((t) => (t.quantityAvailable ?? 1) > 0)
+  const availableTickets = tickets.filter((t) => (t.quantityAvailable ?? 1) > 0 && _isOnSale(t))
   ctx._availableTickets = availableTickets
   ctx._event = event
 
@@ -150,10 +153,14 @@ function _buildCover(event, palette, onCancel) {
   cover.style.cssText = 'width:100%;height:230px;position:relative;overflow:hidden;background:#111;flex-shrink:0'
 
   const img = document.createElement('img')
-  img.src = event.cover_url ?? event.coverUrl ?? ''
+  img.src = event.cover_url ?? event.coverUrl ?? DEFAULT_EVENT_COVER_DATA_URI
   img.alt = event.title ?? ''
   img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block'
-  img.onerror = () => { img.style.background = '#1a1a1a'; img.style.display = 'none' }
+  // Si la cover distante échoue (URL cassée, lente, réseau) → fallback embarqué, jamais de zone vide.
+  img.onerror = () => {
+    if (img.src === DEFAULT_EVENT_COVER_DATA_URI) { img.onerror = null; return }
+    img.src = DEFAULT_EVENT_COVER_DATA_URI
+  }
   cover.appendChild(img)
 
   // Gradient bas → titre lisible
@@ -339,6 +346,18 @@ export function _formatTicketType(type) {
   return map[String(type ?? '').toUpperCase()] ?? type ?? 'Billet'
 }
 
+/**
+ * Un billet hors de sa fenêtre de vente (startSale/endSale) est rejeté par le backend
+ * à la création de commande — on le filtre déjà côté SDK pour éviter de faire remplir
+ * tout le formulaire à l'acheteur pour rien.
+ */
+function _isOnSale(ticket) {
+  const now = new Date()
+  if (ticket.startSale && now < new Date(ticket.startSale)) return false
+  if (ticket.endSale && now > new Date(ticket.endSale)) return false
+  return true
+}
+
 export function _formatEventDate(eventDates) {
   if (!Array.isArray(eventDates) || eventDates.length === 0) return ''
   const first = eventDates[0]
@@ -347,31 +366,69 @@ export function _formatEventDate(eventDates) {
   return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/**
+ * Skeleton respectant le gabarit final (cover + description + billets) — évite le texte
+ * "Chargement..." brut et le saut de layout quand le contenu réel arrive. Garde un bouton
+ * fermer utilisable pendant le chargement (absent auparavant).
+ */
 function _renderLoading(modal, palette, onCancel) {
   modal.innerHTML = ''
+
+  const coverWrap = document.createElement('div')
+  coverWrap.style.cssText = 'position:relative;width:100%;height:230px;overflow:hidden;flex-shrink:0'
+  coverWrap.appendChild(skeletonBlock(palette, { height: '230px', radius: '0' }))
+  const closeBtn = document.createElement('button')
+  closeBtn.type = 'button'
+  closeBtn.setAttribute('aria-label', 'Fermer')
+  closeBtn.innerHTML = '✕'
+  closeBtn.style.cssText = 'position:absolute;top:12px;left:12px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.55);border:0.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:14px;padding:0;line-height:1'
+  closeBtn.addEventListener('click', () => onCancel())
+  coverWrap.appendChild(closeBtn)
+  modal.appendChild(coverWrap)
+
   const body = document.createElement('div')
-  body.style.cssText = 'padding:48px 20px;text-align:center'
-  const p = document.createElement('p')
-  p.style.cssText = 'font-size:13px;color:' + palette.textSecondary
-  p.textContent = 'Chargement...'
-  body.appendChild(p)
+  body.style.cssText = 'padding:16px 20px 22px;display:flex;flex-direction:column;gap:10px'
+  body.appendChild(skeletonBlock(palette, { height: '13px', width: '85%' }))
+  body.appendChild(skeletonBlock(palette, { height: '13px', width: '55%' }))
+
+  const ticketsWrap = document.createElement('div')
+  ticketsWrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:8px'
+  ticketsWrap.appendChild(skeletonBlock(palette, { height: '58px', radius: '14px' }))
+  ticketsWrap.appendChild(skeletonBlock(palette, { height: '58px', radius: '14px' }))
+  body.appendChild(ticketsWrap)
+
+  body.appendChild(skeletonBlock(palette, { height: '48px', radius: '100px' }))
   modal.appendChild(body)
 }
 
 function _renderError(modal, palette, onCancel, msg) {
   modal.innerHTML = ''
   const body = document.createElement('div')
-  body.style.cssText = 'padding:48px 20px;text-align:center'
+  body.style.cssText = 'padding:52px 20px 28px;display:flex;flex-direction:column;align-items:center;text-align:center'
+
+  const icon = document.createElement('div')
+  icon.style.cssText = 'width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(249,115,115,0.1);margin-bottom:12px;font-size:30px'
+  icon.textContent = '❌'
+  body.appendChild(icon)
+
+  const title = document.createElement('h2')
+  title.style.cssText = 'font-size:20px;font-weight:800;color:' + palette.textPrimary + ';margin:0 0 8px'
+  title.textContent = "Impossible de charger l'événement"
+  body.appendChild(title)
+
   const p = document.createElement('p')
-  p.style.cssText = 'font-size:13px;color:#f97373'
-  p.textContent = 'Erreur : ' + msg
+  p.style.cssText = 'font-size:13px;color:' + palette.textSecondary + ';margin:0 0 20px;line-height:1.5;max-width:300px'
+  p.textContent = msg
   body.appendChild(p)
+
   const btn = document.createElement('button')
   btn.type = 'button'
   btn.textContent = 'Fermer'
-  btn.style.cssText = 'margin-top:16px;padding:10px 20px;border-radius:100px;border:0.5px solid ' + palette.border + ';background:transparent;color:' + palette.textSecondary + ';cursor:pointer;font-size:13px'
+  btn.style.cssText = 'width:100%;padding:14px;border-radius:100px;border:none;background:#FF4D00;color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-sizing:border-box'
   btn.addEventListener('click', () => onCancel())
   body.appendChild(btn)
+
+  body.appendChild(_buildFooter(palette))
   modal.appendChild(body)
 }
 

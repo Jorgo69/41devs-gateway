@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { createGateway } from '@gateway/index.js'
 
-// Gateway en mode AUTO — clé VEEP réelle, API VEEP production
+// Gateway en mode AUTO. En local, VITE_API_BASE_URL pointe sur mock-api/
+// (npm run mock) pour une démo stable sans dépendre d'une clé VEEP réelle.
+// En prod (docs-site déployé), retombe sur l'API VEEP réelle.
 const demoGateway = createGateway({
   theme: 'auto',
-  publicKey: 'vp_live_6abe3748e66eb978760909b8d51d9a6d51f8fcee82fd171d1531324f2191cb6b',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
+  publicKey: import.meta.env.VITE_PUBLIC_KEY ?? 'vp_live_6abe3748e66eb978760909b8d51d9a6d51f8fcee82fd171d1531324f2191cb6b',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://api.prod.veep.fun/api/v1',
 })
+
+const DEMO_EVENT_ID = import.meta.env.VITE_DEMO_EVENT_ID ?? '1662b823-4f7d-4267-a69d-2f2279c1dd36'
 
 export default function Demo({ t }) {
   const [loading, setLoading] = useState(false)
@@ -18,7 +22,7 @@ export default function Demo({ t }) {
     setLastResult(null)
     try {
       const result = await demoGateway.openPayment({
-        eventId: '1662b823-4f7d-4267-a69d-2f2279c1dd36',
+        eventId: DEMO_EVENT_ID,
       })
       setLastResult({ ok: true, data: result })
     } catch (e) {
@@ -230,9 +234,6 @@ export default function Demo({ t }) {
                 <CodeLine indent>
                   publicKey: <Str>'vp_live_xxx'</Str>,
                 </CodeLine>
-                <CodeLine indent>
-                  apiBaseUrl: <Str>'https://api.dev.veep.fun/api/v1'</Str>,
-                </CodeLine>
                 <CodeLine>{'});'}</CodeLine>
                 <br />
                 <CodeLine>
@@ -250,7 +251,7 @@ export default function Demo({ t }) {
                   <Cm>// 1 bouton = 1 event. Plusieurs events → plusieurs boutons.</Cm>
                 </CodeLine>
                 <CodeLine>
-                  <Cm>// L'image cover est récupérée automatiquement depuis VEEP.</Cm>
+                  <Cm>// Mobile money ET carte bancaire proposés automatiquement.</Cm>
                 </CodeLine>
               </pre>
             </div>

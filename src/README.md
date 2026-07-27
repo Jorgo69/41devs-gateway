@@ -7,9 +7,9 @@ Organisation du SDK par dossiers. Chaque dossier contient un README qui décrit 
 | **constants/** | Codes, logo, pays par défaut, palettes, `isMobileMoney` |
 | **theme/** | Thème effectif (light/dark/auto), construction de la palette |
 | **overlay/** | Création / suppression du conteneur plein écran |
-| **validation/** | Validation email, téléphone, carte (numéro, expiration, CVV) |
-| **components/** | Briques UI : fermer, signature, logos, champs, sélecteur pays (Helpers.js) |
-| **steps/** | step1 = choix du moyen ; step2 = formulaire Mobile Money ou Carte |
-| **core/** | openPayment (orchestration + Promise), createGateway (API publique) |
+| **validation/** | Validation email, téléphone (Helpers.js et la validation carte ne sont plus utilisés — saisie carte déléguée à KKiaPay) |
+| **components/** | Skeleton.js (blocs de chargement shimmer) ; Helpers.js (inutilisé actuellement) |
+| **steps/** | step0-tickets (cover+billets) ; step1 (formulaire + choix moyen) ; step3 (chargement) ; step4 (résultat) |
+| **core/** | openPayment (orchestration + Promise), createGateway (API publique), kkiapayWidget (paiement carte) |
 
 Point d’entrée du package : **racine `index.js`** (ré-exporte `src/index.js`).

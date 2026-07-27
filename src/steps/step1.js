@@ -17,6 +17,7 @@
 
 import { _ctaStyle, _buildFooter, _computeTotal, _formatTicketType } from './step0-tickets.js'
 import * as validation from '../validation/index.js'
+import { skeletonOperatorRow } from '../components/Skeleton.js'
 
 const COUNTRIES = [
   { code: 'BJ', name: 'Bénin', flag: '🇧🇯', dial: '+229', prefix: '229' },
@@ -144,10 +145,9 @@ export function renderStep1(ctx) {
     selectedOperator = null
     ctx.selectedOperator = null
     opGrid.innerHTML = ''
-    const loading = document.createElement('p')
-    loading.style.cssText = 'font-size:12px;color:' + palette.textMuted + ';margin:4px 0'
-    loading.textContent = 'Chargement...'
-    opGrid.appendChild(loading)
+    opGrid.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:4px'
+    opGrid.appendChild(skeletonOperatorRow(palette))
+    opGrid.appendChild(skeletonOperatorRow(palette))
     updateCta()
 
     if (!isAutoMode) {
@@ -162,21 +162,25 @@ export function renderStep1(ctx) {
     const apiBaseUrl = finalConfig.apiBaseUrl ?? ctx.baseConfig?.apiBaseUrl
     const publicKey = finalConfig.publicKey ?? ctx.baseConfig?.publicKey
 
+    const appendOperatorBtn = (op) => {
+      const btn = _operatorBtn(op, palette)
+      btn.addEventListener('click', (e) => { e.preventDefault(); selectOperator(op, btn) })
+      opGrid.appendChild(btn)
+    }
+
+    // Carte bancaire : universelle, indépendante du pays — jamais fournie par l'API
+    // pays (réservée au mobile money), toujours ajoutée côté client.
+    const appendCardOption = () => appendOperatorBtn({ code: 'card', name: 'Carte bancaire' })
+
     _fetchJson(`${apiBaseUrl}/developer/public/operators?country=${country.code}`, publicKey)
       .then((operators) => {
         opGrid.innerHTML = ''
-        if (!Array.isArray(operators) || operators.length === 0) {
-          opGrid.innerHTML = '<p style="font-size:12px;color:' + palette.textMuted + ';margin:4px 0">Aucun opérateur disponible.</p>'
-          return
-        }
-        operators.forEach((op) => {
-          const btn = _operatorBtn(op, palette)
-          btn.addEventListener('click', (e) => { e.preventDefault(); selectOperator(op, btn) })
-          opGrid.appendChild(btn)
-        })
+        if (Array.isArray(operators)) operators.forEach(appendOperatorBtn)
+        appendCardOption()
       })
       .catch(() => {
-        opGrid.innerHTML = '<p style="font-size:12px;color:#f97373;margin:4px 0">Impossible de charger les opérateurs.</p>'
+        opGrid.innerHTML = ''
+        appendCardOption()
       })
   }
 

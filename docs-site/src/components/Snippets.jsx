@@ -5,10 +5,10 @@ const CODE = {
 
 const gateway = createGateway({
   publicKey: 'vp_live_VOTRE_CLE_PUBLIQUE',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 })
 
-// Ouvre la modal avec le flux complet VEEP + AfribaPay
+// Ouvre la modal avec le flux complet VEEP + KKiaPay
+// (mobile money ET carte bancaire, automatiquement)
 const result = await gateway.openPayment({
   eventId: 'uuid-de-l-evenement',
   ticketId: 'uuid-du-ticket',
@@ -60,7 +60,7 @@ await gateway.openPayment({
   cdn: `<!-- Dans votre page HTML, sans bundler -->
 <script type="module">
   import { createGateway }
-    from 'https://cdn.jsdelivr.net/npm/@ibra69/41devs-gateway@1.1.0/index.js'
+    from 'https://cdn.jsdelivr.net/npm/@ibra69/41devs-gateway@latest/index.js'
 
   const gateway = createGateway({
     onSubmit: async (formData) => {
@@ -241,8 +241,9 @@ export default function Snippets({ t }) {
 
 const FEATURES = [
   { icon: '🌍', label: 'Multi-pays', desc: 'Bénin, Côte d\'Ivoire, Togo, Sénégal, Burkina Faso…' },
+  { icon: '💳', label: 'Carte incluse', desc: 'Visa, Mastercard, Verve — toujours disponible, aucune config.' },
   { icon: '🌙', label: 'Dark / Light', desc: 'Suit le thème du navigateur automatiquement.' },
-  { icon: '✅', label: 'Polling auto', desc: 'Attend la confirmation AfribaPay sans intervention.' },
+  { icon: '✅', label: 'Polling auto', desc: 'Attend la confirmation KKiaPay sans intervention.' },
   { icon: '🔌', label: 'Sans dépendances', desc: 'Vanilla JS — < 15 kb gzippé.' },
 ]
 

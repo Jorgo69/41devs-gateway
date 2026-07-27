@@ -1,19 +1,24 @@
 # steps
 
-Étapes du flux de paiement : choix du moyen (step1), puis formulaire correspondant (step2). Chaque step remplit le même modal et s’appuie sur le contexte partagé.
+Étapes du flux de paiement, dans l'ordre : `step0-tickets.js` (cover + billets, mode AUTO avec event) → `step1.js` (coordonnées + moyen de paiement) → `step3.js` (chargement) → `step4.js` (succès/échec). Chaque step remplit le même `modal` et s'appuie sur le contexte partagé `ctx` construit dans `core/openPayment.js`.
+
+## step0-tickets.js
+
+- **Rôle** : cover de l'événement, description, liste des billets avec sélecteurs de quantité, total, CTA "Choisir mes billets". Mode générique : utilise `finalConfig.event`/`finalConfig.tickets` au lieu d'un fetch.
+- **Exporte** : `renderStepEvent(ctx)`, plus des helpers partagés (`_ctaStyle`, `_buildFooter`, `_computeTotal`, `_formatTicketType`, `_formatEventDate`) réutilisés par `step1.js`.
 
 ## step1.js
 
-- **Rôle** : afficher l’écran de choix du moyen de paiement (MTN, Moov, Celtis, Carte bancaire), le montant et les boutons Annuler / choix.
+- **Rôle** : formulaire prénom/nom/email/téléphone (avec sélecteur pays intégré) + choix de l'opérateur de paiement. Mode AUTO : opérateurs chargés depuis `GET /developer/public/operators?country=XX` (inclut "Carte bancaire" si l'API le retourne). Mode générique : liste statique `finalConfig.methods`.
 - **Exporte** : `renderStep1(ctx)`.
-- **Reçoit** : `ctx` avec au moins `modal`, `finalConfig`, `baseConfig`, `palette`, `countries`, `onCancel`, `onMethodSelect`. `onMethodSelect(label)` est appelé au clic sur un moyen ; `onCancel()` au clic Annuler ou fermeture.
-- **Prépare** : vide le modal, ajoute logos, titre, montant, grille de moyens, footer. N’a pas de retour (effet de bord sur le DOM).
+- **Soumission** : appelle `ctx.onFormSubmit(formData)`. La carte bancaire n'a pas de formulaire dédié — même formulaire que Mobile Money ; la saisie carte est déléguée au widget KKiaPay (`core/kkiapayWidget.js`), jamais collectée par le SDK.
 
-## step2.js
+## step3.js
 
-- **Rôle** : afficher le formulaire de l’étape 2 (Mobile Money : pays, prénom, nom, email, téléphone ; Carte : email, numéro, expiration, CVV), avec Retour, Annuler et Confirmer.
-- **Exporte** : `renderStep2(ctx, methodLabel)`.
-- **Reçoit** : `ctx` (même forme que step1, avec en plus `onSuccess`, `onBack`) et `methodLabel` (chaîne du moyen choisi). À la soumission valide, appelle `onSuccess(result)` avec le payload (sans données sensibles carte). `onBack()` retourne à l’étape 1.
-- **Prépare** : vide le modal, ajoute bouton Retour, titre, formulaire, validation via le module validation, footer. N’a pas de retour.
+- **Rôle** : écran de chargement pendant l'appel API / le widget de paiement.
 
-**Contexte partagé (ctx)** : construit dans core/openPayment.js ; contient modal, finalConfig, baseConfig, palette, countries, onSuccess, onCancel, onBack, onMethodSelect.
+## step4.js
+
+- **Rôle** : écran final (succès avec récapitulatif, ou échec avec bouton réessayer).
+
+**Contexte partagé (ctx)** : modal, finalConfig, baseConfig, palette, isAutoMode, selectedOperator, selectedCountry, selectedQuantities, onProceed, onBack, onCancel, onFormSubmit.

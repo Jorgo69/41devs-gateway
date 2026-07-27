@@ -10,7 +10,6 @@ const OPTIONS = [
     },
     code: `const gateway = createGateway({
   publicKey: 'vp_live_xxx',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 
   // Logo de votre marque (affiché à droite — côté client)
   merchantLogoUrl: 'https://votre-site.com/logo.png',
@@ -31,7 +30,6 @@ const OPTIONS = [
     },
     code: `const gateway = createGateway({
   publicKey: 'vp_live_xxx',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 
   // 'light' | 'dark' | 'auto' (défaut: 'auto')
   theme: 'dark',
@@ -56,7 +54,6 @@ const OPTIONS = [
     },
     code: `const gateway = createGateway({
   publicKey: 'vp_live_xxx',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 
   // Largeur étapes events + tickets (défaut: '560px')
   eventsModalWidth: '640px',

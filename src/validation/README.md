@@ -13,4 +13,4 @@ Règles de validation des formulaires (email, téléphone, carte). Logique pure,
   - `validateCvv(cvvRaw)` — 3 ou 4 chiffres.
 - **Reçoit** : les valeurs brutes (chaînes ou objet pays).
 - **Retourne** : `{ valid: true }` ou `{ valid: false, error: 'Message utilisateur' }`.
-- **Utilisé par** : steps (step2).
+- **Utilisé par** : steps (step1) pour `validateEmail`/`validatePhoneForCountry`. `validateCardNumber`/`validateExpiry`/`validateCvv` ne sont plus utilisées — la saisie carte est déléguée au widget KKiaPay, jamais collectée par le SDK.

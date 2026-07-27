@@ -27,9 +27,10 @@ Le SDK appelle directement l'API VEEP + AfribaPay. Zéro backend à écrire.
 ```js
 import { createGateway } from '@ibra69/41devs-gateway'
 
+// Seule votre publicKey VEEP est nécessaire — l'URL de l'API et la carte
+// bancaire (KKiaPay) sont déjà configurées dans le SDK.
 const gateway = createGateway({
   publicKey: 'vp_live_VOTRE_CLE_PUBLIQUE',
-  apiBaseUrl: 'https://api.dev.veep.fun/api/v1',
 })
 
 // Au clic sur un bouton
@@ -102,15 +103,13 @@ await gateway.openPayment({
 
 ## Opérateurs supportés
 
-| Opérateur | Code |
-|-----------|------|
-| MTN Mobile Money | `MTN` |
-| Orange Money | `Orange` |
-| Moov Money | `Moov` |
-| Wave | `Wave` |
-| Carte bancaire | `Carte bancaire` |
+En mode AUTO, les opérateurs mobile money (MTN, Orange, Moov, Wave...) sont chargés
+dynamiquement selon le pays de l'acheteur. **La carte bancaire (Visa, Mastercard, Verve)
+est toujours proposée en plus**, quel que soit le pays — paiement géré par le widget
+KKiaPay (saisie carte, 3D Secure), le SDK ne voit jamais le numéro de carte/CVV.
 
-Les pays et opérateurs disponibles sont chargés dynamiquement depuis l'API AfribaPay.
+Le nom, l'email et le téléphone déjà saisis dans le formulaire pré-remplissent
+automatiquement le widget carte — l'acheteur n'a pas à les retaper.
 
 ---
 
@@ -119,7 +118,6 @@ Les pays et opérateurs disponibles sont chargés dynamiquement depuis l'API Afr
 | Option | Type | Description |
 |--------|------|-------------|
 | `publicKey` | `string` | Clé publique VEEP (mode AUTO) |
-| `apiBaseUrl` | `string` | URL de base de l'API VEEP (mode AUTO) |
 | `onSubmit` | `async (formData) => { orderId }` | Callback de soumission (mode GÉNÉRIQUE) |
 | `onPoll` | `async (orderId) => { status }` | Callback de polling (mode GÉNÉRIQUE) |
 | `onComplete` | `(result) => void` | Succès |
@@ -139,6 +137,9 @@ Les pays et opérateurs disponibles sont chargés dynamiquement depuis l'API Afr
 | `eventId` | `string` | ID événement VEEP (mode AUTO) |
 | `ticketId` | `string` | ID ticket VEEP (mode AUTO) |
 | `quantity` | `number` | Quantité (mode AUTO, défaut : 1) |
+
+> En mode AUTO, si l'événement n'a pas d'image de couverture (ou que l'URL échoue à
+> charger), une image VEEP par défaut s'affiche automatiquement — jamais de zone vide.
 
 ---
 

@@ -32,7 +32,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "beta-readme": "node -e \"require('fs').copyFileSync('ReadMe.beta.md','ReadMe.md')\""
+    "beta-readme": "node -e \"require('fs').copyFileSync('ReadMe.beta.md','ReadMe.md')\"",
+    "mock": "node mock-api/server.js"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",

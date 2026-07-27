@@ -13,4 +13,12 @@ Briques d’interface réutilisables : boutons, champs, logos, signature. Créat
   - `createInput(palette, labelText, options)` — retourne `{ wrapper, input }` pour un champ avec label (options : type, placeholder, autocomplete).
   - `createCountrySelect(palette, countries)` — retourne `{ wrapper, select, getSelectedCountry }` pour le sélecteur de pays.
 - **Retourne** : soit rien (éléments ajoutés au conteneur), soit un objet avec les nœuds créés et des accesseurs (ex. `getSelectedCountry`).
-- **Utilisé par** : steps (step1, step2).
+- **Utilisé par** : personne actuellement — ces helpers dataient de l'ancien step2.js (supprimé, code mort). `step0-tickets.js`/`step1.js` construisent leur DOM directement sans passer par ce fichier.
+
+## Skeleton.js
+
+- **Rôle** : blocs "skeleton" (shimmer animé) pour les écrans de chargement dont on connaît déjà la forme finale — évite le texte "Chargement..." brut et le saut de layout.
+- **Exporte** :
+  - `skeletonBlock(palette, { width?, height, radius? })` — un bloc rectangulaire qui respecte le gabarit du contenu final (cover, ligne de texte, carte de billet...).
+  - `skeletonOperatorRow(palette)` — une ligne au gabarit d'un opérateur (`_operatorBtn` dans step1.js) : icône + ligne de texte.
+- **Utilisé par** : step0-tickets.js (chargement event+billets), step1.js (chargement opérateurs).
