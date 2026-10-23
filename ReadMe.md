@@ -170,6 +170,48 @@ cd 41devs-gateway
 npm test        # Vitest — 30+ tests
 ```
 
+### Publier une nouvelle version (mainteneur)
+
+Étapes suivies pour la 1.3.1 (23/10/2026) ; le détail et les pièges sont dans `RELEASE.md` (fichier local).
+
+1. **Vérifier son identité avant toute chose** — chaque commit, push et publication doit partir de son propre compte,
+   sans co-auteur :
+   ```bash
+   git config user.name && git config user.email   # le compte du mainteneur
+   ssh -T git@github.com                             # « Hi <compte> »
+   gh auth status                                    # compte actif
+   npm whoami                                        # sinon : npm login (validation dans le navigateur)
+   ```
+2. **Travailler sur `beta`** (jamais directement sur `main`), tester :
+   ```bash
+   git checkout beta && git pull --ff-only origin beta
+   npm test
+   git add src tests && git commit -m "fix(gateway): …"
+   ```
+3. **Monter la version** (`version` dans `package.json`, ex. 1.3.0 → 1.3.1), puis :
+   ```bash
+   npm install --package-lock-only && npm test
+   git add package.json package-lock.json && git commit -m "chore(release): bump version to X.Y.Z"
+   git push origin beta
+   ```
+4. **Recopier `beta` sur `main`** (copie exacte, jamais de fusion) :
+   ```bash
+   git checkout main && git fetch origin && git reset --hard origin/beta
+   npm test && git push origin main --force-with-lease
+   ```
+5. **Publier** — rien ne part sur npm au `git push` : la publication est manuelle.
+   ```bash
+   npm publish --dry-run   # vérifier le contenu (index.js + src seulement)
+   npm publish             # validation dans le navigateur
+   npm view @ibra69/41devs-gateway version   # doit afficher la nouvelle version
+   ```
+6. **Relire les commits** : `git log -3 --format='%an <%ae>%n%B'` → son compte, aucun `Co-Authored-By`.
+7. **Mettre à jour les projets qui utilisent le paquet** : `npm install @ibra69/41devs-gateway@X.Y.Z --save-exact`, puis
+   reconstruire et redéployer leur image (le paquet est intégré au build). Les sites qui le chargent par CDN avec
+   `@latest` reçoivent la nouvelle version sans rien faire (après le cache du CDN) ; ceux qui citent une version précise
+   doivent changer le numéro.
+8. **Site de documentation** (si le changement s'y voit) : `cd docs-site && npm run deploy`.
+
 ---
 
 **41DEVS** — [GitHub](https://github.com/Jorgo69/41devs-gateway) · [npm](https://www.npmjs.com/package/@ibra69/41devs-gateway)
