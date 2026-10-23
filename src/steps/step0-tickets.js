@@ -115,7 +115,7 @@ export async function renderStepEvent(ctx) {
   // doivent être initialisées (const) avant le premier appel via _buildTicketCard
   function updateUI() {
     const total = _computeTotal(ctx.selectedQuantities, availableTickets)
-    totalEl.textContent = total === 0 ? '0 XOF' : total.toLocaleString('fr-FR') + ' XOF'
+    totalEl.textContent = _formatAmount(total)
     const hasSelection = Object.values(ctx.selectedQuantities).some((q) => q > 0)
     summaryFee.style.opacity = hasSelection ? '1' : '0.4'
     cta.disabled = !hasSelection
@@ -217,7 +217,7 @@ function _buildCover(event, palette, onCancel) {
 
 function _buildTicketCard(ticket, ctx, palette, onUpdate) {
   const price = parseFloat(ticket.ticketPrice ?? ticket.price ?? 0)
-  const priceLabel = price === 0 ? 'Gratuit' : price.toLocaleString('fr-FR') + ' XOF'
+  const priceLabel = price === 0 ? 'Gratuit' : _formatAmount(price)
   const maxQty = Math.min(ticket.maxPurchase ?? 10, ticket.quantityAvailable ?? 999)
   const minQty = 0
 
@@ -236,7 +236,7 @@ function _buildTicketCard(ticket, ctx, palette, onUpdate) {
 
   const nameEl = document.createElement('div')
   nameEl.style.cssText = 'font-size:14px;font-weight:600;color:' + palette.textPrimary + ';margin-bottom:2px'
-  nameEl.textContent = _formatTicketType(ticket.ticketType)
+  nameEl.textContent = _ticketLabel(ticket)
   left.appendChild(nameEl)
 
   const infoText = [
@@ -335,6 +335,27 @@ export function _computeTotal(selectedQuantities, tickets) {
     const qty = selectedQuantities[t.id] ?? 0
     return sum + parseFloat(t.ticketPrice ?? 0) * qty
   }, 0)
+}
+
+/**
+ * Montant affiché à l'acheteur : entier, milliers séparés, devise « FCFA » (« 1 000 FCFA »).
+ * @param {number|string} n montant (l'API peut renvoyer « 1000.00 »)
+ * @returns {string}
+ */
+export function _formatAmount(n) {
+  const v = Math.round(Number(n) || 0)
+  return v.toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, '\u00a0') + '\u00a0FCFA'
+}
+
+/**
+ * Nom d'un billet tel que l'organisateur l'a saisi (« Pass VIP »), sinon son type (« Standard »).
+ * Avant : seul le type était affiché → deux billets « Standard » indiscernables.
+ * @param {Object} ticket billet de l'API
+ * @returns {string}
+ */
+export function _ticketLabel(ticket) {
+  const name = String(ticket?.ticketName ?? ticket?.name ?? '').trim()
+  return name || _formatTicketType(ticket?.ticketType)
 }
 
 export function _formatTicketType(type) {

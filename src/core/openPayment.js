@@ -22,6 +22,15 @@ import { payWithKkiapay, closeKkiapayWidget } from './kkiapayWidget.js'
  * @param {Object} options    - Options de la session
  * @returns {Promise<Object>}
  */
+/** Écouteur Échap de la fenêtre ouverte (une seule fenêtre à la fois : remplacé à chaque ouverture). */
+let activeKeyHandler = null
+
+/** Retire l'écouteur Échap de la fenêtre précédente. */
+function detachKeyHandler() {
+  if (activeKeyHandler) document.removeEventListener('keydown', activeKeyHandler)
+  activeKeyHandler = null
+}
+
 export function openPayment(baseConfig, options) {
   return new Promise((resolve, reject) => {
     let settled = false
@@ -54,7 +63,23 @@ export function openPayment(baseConfig, options) {
       closeKkiapayWidget() // no-op si aucun paiement carte n'était en cours
       typeof finalConfig.onCancel === 'function' && finalConfig.onCancel()
       reject({ code: PAYMENT_CANCELLED_CODE, message: "Paiement annulé par l'utilisateur." })
+      detachKeyHandler()
       closeOverlay()
+    }
+
+    /**
+     * Clic sur le fond ou touche Échap : ferme la fenêtre. Ignoré pendant l'envoi / l'attente du paiement
+     * (un geste involontaire ne doit pas interrompre un paiement en cours — la croix reste disponible).
+     * Après un résultat (succès / échec affiché), ferme simplement.
+     */
+    function requestClose() {
+      if (ctx.processing) return
+      if (settled) {
+        detachKeyHandler()
+        closeOverlay()
+        return
+      }
+      finishWithCancel()
     }
 
     // ── Palette + modal ───────────────────────────────────────────
@@ -65,6 +90,15 @@ export function openPayment(baseConfig, options) {
     const overlay = getOrCreateOverlay()
     overlay.style.background = palette.overlayBg
     overlay.innerHTML = ''
+    // Fermeture au clic sur le fond (pas sur la fenêtre elle-même)
+    overlay.onclick = (e) => { if (e.target === overlay) requestClose() }
+    detachKeyHandler()
+    activeKeyHandler = (e) => {
+      if (e.key !== 'Escape') return
+      if (!document.getElementById(overlay.id)) { detachKeyHandler(); return }
+      requestClose()
+    }
+    document.addEventListener('keydown', activeKeyHandler)
 
     const modal = document.createElement('div')
 
@@ -114,6 +148,7 @@ export function openPayment(baseConfig, options) {
       selectedOperator: null,
       selectedCountry: null,
       selectedQuantities: {},
+      processing: false,
       _availableTickets: [],
       _event: null,
       onCancel: finishWithCancel,
@@ -136,6 +171,7 @@ export function openPayment(baseConfig, options) {
     ctx.onFormSubmit = async (formData) => {
       if (isClosed) return
       renderStep3(ctx, { hasPaymentUrl: false })
+      ctx.processing = true
 
       try {
         if (isAutoMode) {
@@ -154,6 +190,8 @@ export function openPayment(baseConfig, options) {
           },
         })
         finishWithError(err)
+      } finally {
+        ctx.processing = false
       }
     }
 

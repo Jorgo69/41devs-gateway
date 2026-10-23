@@ -6,7 +6,7 @@
  * Erreur : message + bouton Réessayer.
  */
 
-import { _buildFooter, _computeTotal, _formatTicketType } from './step0-tickets.js'
+import { _buildFooter, _computeTotal, _formatAmount, _ticketLabel } from './step0-tickets.js'
 import { closeOverlay } from '../overlay/index.js'
 
 /**
@@ -40,6 +40,9 @@ export function renderStep4(ctx, opts = {}) {
 // ── Succès ────────────────────────────────────────────────────────
 
 function _renderSuccess(body, ctx, result, palette) {
+  // Commande gratuite (total 0) : rien n'a été payé → « Réservation confirmée », pas « Paiement confirmé »
+  const isFreeOrder = !!result?.isFree || _computeTotal(ctx.selectedQuantities ?? {}, ctx._availableTickets ?? []) === 0
+
   // Icône
   const icon = document.createElement('div')
   icon.style.cssText = [
@@ -52,7 +55,7 @@ function _renderSuccess(body, ctx, result, palette) {
   // Titre
   const title = document.createElement('h2')
   title.style.cssText = 'font-size:20px;font-weight:800;color:' + palette.textPrimary + ';margin:0 0 4px;letter-spacing:-0.3px'
-  title.textContent = 'Paiement confirmé !'
+  title.textContent = isFreeOrder ? 'Réservation confirmée !' : 'Paiement confirmé !'
   body.appendChild(title)
 
   const sub = document.createElement('p')
@@ -112,11 +115,11 @@ function _renderSuccess(body, ctx, result, palette) {
 
       const nameEl = document.createElement('div')
       nameEl.style.cssText = 'font-size:14px;color:' + palette.textPrimary + ';font-weight:500'
-      nameEl.textContent = `${qty}× ${_formatTicketType(t.ticketType)}`
+      nameEl.textContent = `${qty}× ${_ticketLabel(t)}`
 
       const priceEl = document.createElement('div')
       priceEl.style.cssText = 'font-size:14px;font-weight:700;color:' + palette.textPrimary
-      priceEl.textContent = price === 0 ? 'Gratuit' : (price * qty).toLocaleString('fr-FR') + ' XOF'
+      priceEl.textContent = price === 0 ? 'Gratuit' : _formatAmount(price * qty)
 
       row.appendChild(nameEl)
       row.appendChild(priceEl)
@@ -139,7 +142,7 @@ function _renderSuccess(body, ctx, result, palette) {
       totalLbl.textContent = 'Total payé'
       const totalVal = document.createElement('div')
       totalVal.style.cssText = 'font-size:16px;font-weight:800;color:#FF4D00'
-      totalVal.textContent = total.toLocaleString('fr-FR') + ' XOF'
+      totalVal.textContent = _formatAmount(total)
       totalRow.appendChild(totalLbl)
       totalRow.appendChild(totalVal)
       card.appendChild(totalRow)
@@ -153,7 +156,13 @@ function _renderSuccess(body, ctx, result, palette) {
   if (email) {
     const emailInfo = document.createElement('p')
     emailInfo.style.cssText = 'font-size:12px;color:' + palette.textSecondary + ';margin:0 0 20px;line-height:1.5'
-    emailInfo.innerHTML = 'Un e-mail de confirmation a été envoyé à<br><strong style="color:' + palette.textPrimary + '">' + email + '</strong>'
+    // Texte seulement (jamais innerHTML) : l'e-mail vient de la saisie de l'acheteur
+    emailInfo.appendChild(document.createTextNode('Un e-mail de confirmation a été envoyé à'))
+    emailInfo.appendChild(document.createElement('br'))
+    const emailStrong = document.createElement('strong')
+    emailStrong.style.color = palette.textPrimary
+    emailStrong.textContent = String(email)
+    emailInfo.appendChild(emailStrong)
     body.appendChild(emailInfo)
   }
 

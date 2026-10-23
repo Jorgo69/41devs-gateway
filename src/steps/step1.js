@@ -15,9 +15,10 @@
  * Mode GÉNÉRIQUE : liste statique finalConfig.methods
  */
 
-import { _ctaStyle, _buildFooter, _computeTotal, _formatTicketType } from './step0-tickets.js'
+import { _ctaStyle, _buildFooter, _computeTotal, _formatAmount, _ticketLabel } from './step0-tickets.js'
 import * as validation from '../validation/index.js'
 import { skeletonOperatorRow } from '../components/Skeleton.js'
+import { addCloseX } from '../components/Helpers.js'
 
 const COUNTRIES = [
   { code: 'BJ', name: 'Bénin', flag: '🇧🇯', dial: '+229', prefix: '229' },
@@ -44,7 +45,17 @@ export function renderStep1(ctx) {
   modal.innerHTML = ''
 
   const body = document.createElement('div')
-  body.style.cssText = 'padding:20px 20px 24px;display:flex;flex-direction:column;gap:0'
+  body.style.cssText = 'position:relative;padding:20px 20px 24px;display:flex;flex-direction:column;gap:0'
+
+  // Fermer à tout moment (mode évènement : la croix de la couverture disparaît à cette étape ;
+  // le mode générique a déjà sa croix permanente)
+  const hasEventStep = !!(isAutoMode && finalConfig.eventId)
+  if (hasEventStep) addCloseX(body, palette, () => onCancel())
+
+  // Commande gratuite (tickets à 0, ou total 0) : rien à payer → pas de « Moyen de paiement »,
+  // bouton « Confirmer » ; l'API confirme une commande à 0 sans méthode.
+  const isFreeOrder = isAutoMode && Object.values(ctx.selectedQuantities ?? {}).some((q) => q > 0)
+    && _computeTotal(ctx.selectedQuantities ?? {}, tickets) === 0
 
   // Back + header
   body.appendChild(_buildHeader(ctx, palette, event, tickets))
@@ -100,7 +111,7 @@ export function renderStep1(ctx) {
   opHint.textContent = 'Chargement...'
   opGrid.appendChild(opHint)
   opSection.appendChild(opGrid)
-  body.appendChild(opSection)
+  if (!isFreeOrder) body.appendChild(opSection)
 
   // Divider
   const div = document.createElement('div')
@@ -111,7 +122,7 @@ export function renderStep1(ctx) {
   const cta = document.createElement('button')
   cta.type = 'submit'
   cta.disabled = true
-  cta.textContent = '💳 Payer maintenant'
+  cta.textContent = isFreeOrder ? '🎫 Confirmer' : '💳 Payer maintenant'
   cta.style.cssText = _ctaStyle(palette, true)
   body.appendChild(cta)
 
@@ -131,7 +142,7 @@ export function renderStep1(ctx) {
   }
 
   function updateCta() {
-    const valid = iPrenom.value.trim() && iNom.value.trim() && iEmail.value.trim() && iPhone.value.trim() && !!selectedOperator
+    const valid = iPrenom.value.trim() && iNom.value.trim() && iEmail.value.trim() && iPhone.value.trim() && (isFreeOrder || !!selectedOperator)
     cta.disabled = !valid
     cta.style.opacity = valid ? '1' : '0.35'
     cta.style.cursor = valid ? 'pointer' : 'not-allowed'
@@ -142,6 +153,7 @@ export function renderStep1(ctx) {
 
   // ── Chargement des opérateurs ──────────────────────────────────
   function loadOperators(country) {
+    if (isFreeOrder) { ctx.selectedCountry = country; return }
     selectedOperator = null
     ctx.selectedOperator = null
     opGrid.innerHTML = ''
@@ -203,7 +215,8 @@ export function renderStep1(ctx) {
     const emailCheck = validation.validateEmail(email)
     if (!emailCheck.valid) { showError(emailCheck.error); return }
     if (!phoneDigits) { showError('Numéro de téléphone obligatoire.'); return }
-    if (!selectedOperator) { showError('Veuillez choisir un moyen de paiement.'); return }
+    if (!isFreeOrder && !selectedOperator) { showError('Veuillez choisir un moyen de paiement.'); return }
+    if (isFreeOrder) { ctx.selectedOperator = null; ctx.selectedCountry = country }
 
     ctx.onFormSubmit({
       prenom, nom, email,
@@ -254,14 +267,14 @@ function _buildHeader(ctx, palette, event, tickets) {
       const qty = selected[t.id]
       const chip = document.createElement('span')
       chip.style.cssText = 'font-size:12px;background:' + palette.surface + ';border:0.5px solid ' + palette.border + ';border-radius:100px;padding:3px 10px;color:' + palette.textSecondary
-      chip.textContent = `${qty}× ${_formatTicketType(t.ticketType)}`
+      chip.textContent = `${qty}× ${_ticketLabel(t)}`
       summary.appendChild(chip)
     })
 
     const total = _computeTotal(selected, available)
     const totalChip = document.createElement('span')
     totalChip.style.cssText = 'font-size:12px;background:rgba(255,77,0,0.15);border-radius:100px;padding:3px 10px;color:#FF4D00;font-weight:700'
-    totalChip.textContent = total === 0 ? 'Gratuit' : total.toLocaleString('fr-FR') + ' XOF'
+    totalChip.textContent = total === 0 ? 'Gratuit' : _formatAmount(total)
     summary.appendChild(totalChip)
     wrap.appendChild(summary)
   }
@@ -437,7 +450,7 @@ function _buildCtaLabel(ctx, tickets) {
   const total = _computeTotal(ctx.selectedQuantities ?? {}, tickets)
   const op = ctx.selectedOperator?.name ?? ''
   if (total === 0) return `🎫 Confirmer`
-  return `💳 Payer ${total.toLocaleString('fr-FR')} XOF via ${op}`
+  return `💳 Payer ${_formatAmount(total)} via ${op}`
 }
 
 async function _fetchJson(url, publicKey) {
